@@ -1,3 +1,5 @@
+window.onload = run; 
+
 function run() {
   var canvas = <HTMLCanvasElement> document.getElementById('canvas');
   var gl = canvas.getContext('webgl');
@@ -65,6 +67,10 @@ function run() {
     tLastRender: performance.now(),
     running: true,
 
+    // Level
+    levelWidth: gl.canvas.width,
+    levelHeight: gl.canvas.height,
+
     // Input
     arrowDownIsPressed: false,
     arrowUpIsPressed:false,
@@ -75,6 +81,7 @@ function run() {
     playerWidth: 30,
     playerHeight: 30,
     playerSpeed: 200,
+    playerDirection: null,
     playerPosition: {
       x: 10,
       y: 10
@@ -86,15 +93,19 @@ function run() {
     switch(e.key) {
       case 'ArrowUp': {
         Game.arrowUpIsPressed = true;
+        Game.playerDirection = "up";
       } break;
       case 'ArrowDown': {
         Game.arrowDownIsPressed = true;
+        Game.playerDirection = "down";
       } break;
       case 'ArrowRight': {
         Game.arrowRightIsPressed = true;
+        Game.playerDirection = "right";
       } break;
       case 'ArrowLeft': {
         Game.arrowLeftIsPressed = true;
+        Game.playerDirection = "left";
       } break;
     }
   })
@@ -103,15 +114,19 @@ function run() {
     switch(e.key) {
       case 'ArrowUp': {
         Game.arrowUpIsPressed = false;
+        pickPlayerDirection(Game)
       } break;
       case 'ArrowDown': {
         Game.arrowDownIsPressed = false;
+        pickPlayerDirection(Game)
       } break;
       case 'ArrowRight': {
         Game.arrowRightIsPressed = false;
+        pickPlayerDirection(Game)
       } break;
       case 'ArrowLeft': {
         Game.arrowLeftIsPressed = false;
+        pickPlayerDirection(Game)
       } break;
     }
   })
@@ -160,27 +175,30 @@ function run() {
     var dt = tFrame - Game.tLastRender;
     var dx = 0;
     var dy = 0;
-    if(Game.arrowRightIsPressed) {
+    if(Game.playerDirection == "right") {
       dx += Game.playerSpeed * dt / 1000;
-    }
-    if(Game.arrowLeftIsPressed) {
+    } else if(Game.playerDirection == "left") {
       dx -= Game.playerSpeed * dt / 1000;
-    }
-    if(Game.arrowUpIsPressed) {
+    } else if(Game.playerDirection == "up") {
       dy -= Game.playerSpeed * dt / 1000;
-    }
-    if(Game.arrowDownIsPressed) {
+    } else if(Game.playerDirection == "down") {
       dy += Game.playerSpeed * dt / 1000;
     }
 
-    Game.playerPosition.x += dx;
-    Game.playerPosition.y += dy;
+    Game.playerPosition.x =
+      capToBoundaries(Game.playerPosition.x += dx, Game.playerWidth / 2, Game.levelWidth - Game.playerWidth / 2)
+    Game.playerPosition.y =
+      capToBoundaries(Game.playerPosition.y += dy, Game.playerHeight / 2, Game.levelHeight - Game.playerHeight / 2)
 
 
     // Draw Player
     var matrixProjection = mat3.projection(gl.canvas.width, gl.canvas.height);
+    var matrixChangeOrigin = mat3.translation(-Game.playerWidth / 2, -Game.playerHeight / 2);
     var matrixTranslation = mat3.translation(Game.playerPosition.x, Game.playerPosition.y);
-    var matrix = mat3.multiply(matrixProjection, matrixTranslation);
+    var matrix = mat3.identity()
+    matrix = mat3.multiply(matrix, matrixProjection);
+    matrix = mat3.multiply(matrix, matrixTranslation);
+    matrix = mat3.multiply(matrix, matrixChangeOrigin);
     gl.uniformMatrix3fv(glLocations.uMatrix, false, matrix);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(squareVertices(Game.playerWidth, Game.playerHeight)), gl.STATIC_DRAW);
     gl.drawArrays(primitiveType, offset, count);
@@ -192,7 +210,24 @@ function run() {
     }
   };
 
+  // Run the main Loop
   requestAnimationFrame(main);
+}
+
+// GAME UPDATE
+
+function pickPlayerDirection(Game) {
+  if(Game.arrowRightIsPressed) {
+    Game.playerDirection = "right";
+  } else if(Game.arrowLeftIsPressed) {
+    Game.playerDirection = "left";
+  } else if(Game.arrowUpIsPressed) {
+    Game.playerDirection = "up";
+  } else if(Game.arrowDownIsPressed) {
+    Game.playerDirection = "down";
+  } else {
+    Game.playerDirection = null;
+  }
 }
 
 // DRAW UTILS
@@ -208,80 +243,9 @@ function squareVertices(width: number, height: number): number[] {
   ]
 }
 
-// Bind a data buffer to an attribute, fill it with data and enable it
-function buffer(gl, data, program, attribute, size, type) {
-  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
-  gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
-  var attributeLocation = gl.getAttribLocation(program, attribute);
-  gl.vertexAttribPointer(attributeLocation, size, type, false, 0, 0);
-  gl.enableVertexAttribArray(attributeLocation);
-}
-
-
-function drawScene(gl, shaderData) {
-  // Tell WebGL how to convert from clip space to pixels
-  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-
-  // Clear the canvas
-  gl.clear(gl.COLOR_BUFFER_BIT);
-
-  // Tell it to use our program (pair of shaders)
-  gl.useProgram(shaderData.shaderProgram);
-
-  // Turn on the attribute
-  gl.enableVertexAttribArray(shaderData.positionAttributeLocation);
-
-  // Bind the position buffer
-  gl.bindBuffer(gl.ARRAY_BUFFER, shaderData.positionBuffer);
-
-  // Setup a rectangle
-  var color = [1, 0, 0, 1];
-  var width = 100;
-  var height = 30;
-  //setGeometry(gl);
-  
-  // Tell the attribute how to get data out of positionBuffer (ARRAY BUFFER)
-  var size = 2; // 2 components per iteration
-  var type = gl.FLOAT;
-  var normalize = false;
-  var stride = 0; // stride is bytes between beggining of consecutive vertex attributes in buffer. 0 means
-                  // tightly packed (one begins when the previous one ends with no space in between)
-  var offset = 0; // start at the begining of the buffer
-
-  gl.vertexAttribPointer(shaderData.positionAttributeLocation, size, type, normalize, stride, offset);
-
-  //set the resolution
-  gl.uniform2f(shaderData.resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
-
-  // set the color
-  gl.uniform4fv(shaderData.colorUniformLocation, color);
-
-  var translation = [300, 300]
-  var theta = Math.PI * 0.5;
-  var scale = [0.5, 0.5];
-
-  // Compute the matrices
-  var moveOriginMatrix = mat3.translation(-50, -75);
-  var translationMatrix = mat3.translation(translation[0], translation[1]);
-  var rotationMatrix = mat3.rotation(theta);
-  var scaleMatrix = mat3.scaling(scale[0], scale[1]);
-
-  // Multiply the matrices
-  var matrix = mat3.multiply(translationMatrix, rotationMatrix);
-  matrix = mat3.multiply(matrix, scaleMatrix);
-  matrix = mat3.multiply(matrix, moveOriginMatrix);
-
-  // Set the matrix
-  gl.uniformMatrix3fv(shaderData.matrixUniformLocation, false, matrix);
-
-  // draw the geometry
-  var primitiveType = gl.TRIANGLES;
-  var offset = 0;
-  var count = 18;
-  gl.drawArrays(primitiveType, offset, count);
-}
-
 // SHADER MANAGEMENT
+
+
 function initShaderProgram(gl, vsSource, fsSource) {
   var vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
   var fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
@@ -400,5 +364,7 @@ var mat3 = {
   },
 };
 
-
-window.onload = run; 
+// MISC UTILS
+function capToBoundaries(val, min, max) {
+	return Math.min(max, Math.max(val, min));
+}
