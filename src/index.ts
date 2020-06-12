@@ -1,3 +1,8 @@
+type EntityPosition = {
+  x: number,
+  y: number,
+}
+
 window.onload = run; 
 
 function run() {
@@ -78,14 +83,20 @@ function run() {
     arrowLeftIsPressed:false,
 
     // Player
-    playerWidth: 30,
-    playerHeight: 30,
+    playerWidth: 40,
+    playerHeight: 40,
     playerSpeed: 200,
     playerDirection: null,
     playerPosition: {
       x: 10,
       y: 10
     },
+    playerColor: {
+      r: 0.1,
+      g: 0.8,
+      b: 0.5,
+      alpha: 1.0,
+    }
   }
 
   // EVENT LISTENERS
@@ -132,13 +143,6 @@ function run() {
   })
 
 
-  // Define and set color for rectangle
-  var color = [0.1, 0.8, 0.5, 1];
-  gl.uniform4fv(glLocations.uColor, color);
-
-  var primitiveType = gl.TRIANGLES;
-  var offset = 0;
-  var count = 6;
 
   // TODO... See what's missing...
   //set the matrix
@@ -185,23 +189,88 @@ function run() {
       dy += Game.playerSpeed * dt / 1000;
     }
 
-    Game.playerPosition.x =
-      capToBoundaries(Game.playerPosition.x += dx, Game.playerWidth / 2, Game.levelWidth - Game.playerWidth / 2)
-    Game.playerPosition.y =
-      capToBoundaries(Game.playerPosition.y += dy, Game.playerHeight / 2, Game.levelHeight - Game.playerHeight / 2)
+    var tile = {
+      position: {
+        x: 100,
+        y: 100,
+      },
+      width: 40,
+      height: 40,
+    }
+
+    // Update player position
+    let newPlayerPosition = 
+      {
+        x: Game.playerPosition.x += dx,
+        y: Game.playerPosition.y += dy,
+      }
+
+    // collision with screen limits
+    newPlayerPosition.x = 
+      capToBoundaries(newPlayerPosition.x, Game.playerWidth / 2, Game.levelWidth - Game.playerWidth / 2)
+    newPlayerPosition.y =
+      capToBoundaries(newPlayerPosition.y, Game.playerHeight / 2, Game.levelHeight - Game.playerHeight / 2)
+    
+    // collision with tile
+    var playerBoundaries = getRectangleBoundaries(newPlayerPosition, Game.playerWidth, Game.playerHeight);
+    var tileBoundaries = getRectangleBoundaries(tile.position, tile.width, tile.height);
+
+    var topBoundaryInside = (playerBoundaries.top > tileBoundaries.top && playerBoundaries.top < tileBoundaries.bottom);
+    var bottomBoundaryInside = (playerBoundaries.bottom < tileBoundaries.bottom && playerBoundaries.bottom > tileBoundaries.top);
+    var leftBoundaryInside = (playerBoundaries.left < tileBoundaries.right) && (playerBoundaries.right > tileBoundaries.left)
+    var rightBoundaryInside = (playerBoundaries.right < tileBoundaries.left) && (playerBoundaries.right > tileBoundaries.right)
+
+    if((topBoundaryInside || bottomBoundaryInside) && (leftBoundaryInside || rightBoundaryInside)) {
+      if(Game.playerDirection == "up" || Game.playerDirection == "down") {
+        if(Game.playerPosition.y > tileBoundaries.bottom) {
+          newPlayerPosition.y = tileBoundaries.bottom + Game.playerHeight / 2;
+        } else {
+          newPlayerPosition.y = tileBoundaries.top - Game.playerWidth / 2;
+        }
+      }
+
+      if(Game.playerDirection == "left" || Game.playerDirection == "right") {
+        if(Game.playerPosition.x < tileBoundaries.left) {
+          newPlayerPosition.x = tileBoundaries.left - Game.playerWidth / 2;
+        } else {
+          newPlayerPosition.x = tileBoundaries.right + Game.playerWidth / 2;
+        }
+      }
+    } 
+
+    Game.playerPosition = newPlayerPosition;
+
 
 
     // Draw Player
-    var matrixProjection = mat3.projection(gl.canvas.width, gl.canvas.height);
-    var matrixChangeOrigin = mat3.translation(-Game.playerWidth / 2, -Game.playerHeight / 2);
-    var matrixTranslation = mat3.translation(Game.playerPosition.x, Game.playerPosition.y);
-    var matrix = mat3.identity()
-    matrix = mat3.multiply(matrix, matrixProjection);
-    matrix = mat3.multiply(matrix, matrixTranslation);
-    matrix = mat3.multiply(matrix, matrixChangeOrigin);
-    gl.uniformMatrix3fv(glLocations.uMatrix, false, matrix);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(squareVertices(Game.playerWidth, Game.playerHeight)), gl.STATIC_DRAW);
-    gl.drawArrays(primitiveType, offset, count);
+    drawRectangle(
+      gl,
+      glLocations,
+      Game.playerColor,
+      Game.playerWidth,
+      Game.playerHeight,
+      Game.playerPosition.x, 
+      Game.playerPosition.y
+    )
+
+    // Draw Tile
+    var brickColor = {
+      r: 0.67,
+      g: 0.38,
+      b: 0.3,
+      alpha: 1.0,
+    };
+
+
+    drawRectangle(
+      gl,
+      glLocations,
+      brickColor,
+      tile.width,
+      tile.height,
+      tile.position.x,
+      tile.position.y
+    );
 
     Game.tLastRender = tFrame;
 
@@ -230,6 +299,23 @@ function pickPlayerDirection(Game) {
   }
 }
 
+type RectangleBoundaries = {
+  top: number,
+  bottom: number,
+  right: number,
+  left: number,
+};
+
+function getRectangleBoundaries(position: EntityPosition, width: number, height: number) : RectangleBoundaries {
+  return {
+    top: position.y - height / 2,
+    bottom: position.y + height / 2,
+    right: position.x + width / 2,
+    left: position.x - width / 2,
+    
+  };
+};
+
 // DRAW UTILS
 
 function squareVertices(width: number, height: number): number[] {
@@ -241,6 +327,31 @@ function squareVertices(width: number, height: number): number[] {
     width, 0,
     width, height,
   ]
+}
+
+function drawRectangle(gl, glLocations, color, width, height, x, y)
+{
+    // Set matices
+    var matrixProjection = mat3.projection(gl.canvas.width, gl.canvas.height);
+    var matrixChangeOrigin = mat3.translation(-width / 2, -height / 2);
+    var matrixTranslation = mat3.translation(x, y);
+    var matrix = mat3.identity()
+    matrix = mat3.multiply(matrix, matrixProjection);
+    matrix = mat3.multiply(matrix, matrixTranslation);
+    matrix = mat3.multiply(matrix, matrixChangeOrigin);
+    gl.uniformMatrix3fv(glLocations.uMatrix, false, matrix);
+
+    // Add vertices to array buffer (Requires a buffer to been previously bound to gl.ARRAY_BUFFER)
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(squareVertices(width, height)), gl.STATIC_DRAW);
+
+    // Define and set color for rectangle
+    var colorArray = [color.r, color.g, color.b, color.alpha]
+    gl.uniform4fv(glLocations.uColor, colorArray);
+
+    var primitiveType = gl.TRIANGLES;
+    var offset = 0;
+    var count = 6;
+    gl.drawArrays(primitiveType, offset, count);
 }
 
 // SHADER MANAGEMENT
