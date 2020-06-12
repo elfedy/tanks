@@ -81,11 +81,13 @@ function run() {
     arrowUpIsPressed:false,
     arrowRightIsPressed: false,
     arrowLeftIsPressed:false,
+    spaceIsPressed: false,
+    spaceWasPressed: false,
 
     // Player
     playerWidth: 40,
     playerHeight: 40,
-    playerSpeed: 200,
+    playerSpeed: 300,
     playerDirection: null,
     playerPosition: {
       x: 10,
@@ -96,12 +98,22 @@ function run() {
       g: 0.8,
       b: 0.5,
       alpha: 1.0,
-    }
+    },
+    playerBulletSpeed: 400,
+
+    // Other Entities
+    bullets: [],
+    bulletColor: {
+      r: 0,
+      g: 0,
+      b: 0,
+      alpha: 1.0,
+    },
   }
 
   // EVENT LISTENERS
   document.addEventListener('keydown', function(e) {
-    switch(e.key) {
+    switch(e.code) {
       case 'ArrowUp': {
         Game.arrowUpIsPressed = true;
         Game.playerDirection = "up";
@@ -118,11 +130,23 @@ function run() {
         Game.arrowLeftIsPressed = true;
         Game.playerDirection = "left";
       } break;
+      case 'Space': {
+        Game.spaceIsPressed = true;
+      } break;
+      case 'KeyP': {
+        if(Game.running) {
+          Game.running = false;
+        } else {
+          Game.running = true;
+          Game.tLastRender = performance.now(),
+          requestAnimationFrame(main);
+        }
+      } break;
     }
   })
 
   document.addEventListener('keyup', function(e) {
-    switch(e.key) {
+    switch(e.code) {
       case 'ArrowUp': {
         Game.arrowUpIsPressed = false;
         pickPlayerDirection(Game)
@@ -139,33 +163,11 @@ function run() {
         Game.arrowLeftIsPressed = false;
         pickPlayerDirection(Game)
       } break;
+      case 'Space': {
+        Game.spaceIsPressed = false;
+      } break;
     }
   })
-
-
-
-  // TODO... See what's missing...
-  //set the matrix
-
-  // Compute the matrices
-  /*
-   *
-  var translation = [300, 300]
-  var theta = Math.PI * 0.5;
-  var scale = [0.5, 0.5];
-  var moveOriginMatrix = mat3.translation(-50, -75);
-  var translationMatrix = mat3.translation(translation[0], translation[1]);
-  var rotationMatrix = mat3.rotation(theta);
-  var scaleMatrix = mat3.scaling(scale[0], scale[1]);
-
-  // Multiply the matrices
-  var matrix = mat3.multiply(translationMatrix, rotationMatrix);
-  matrix = mat3.multiply(matrix, scaleMatrix);
-  matrix = mat3.multiply(matrix, moveOriginMatrix);
-   */
-
-
-
 
   // Define main loop
   function main(tFrame) {
@@ -240,7 +242,46 @@ function run() {
 
     Game.playerPosition = newPlayerPosition;
 
+    // Update bullets positions
+    Game.bullets.forEach(function(bullet) {
+      bullet.position.x += bullet.dx
+      bullet.position.y += bullet.dy
+    });
 
+    // Bullet Firing
+    if(Game.spaceIsPressed && !Game.spaceWasPressed) {
+      var bulletSpeed = Game.playerBulletSpeed;
+      var dx = 0;
+      var dy = 0;
+
+      switch(Game.playerDirection) {
+        case "up": {
+          dy = -bulletSpeed;
+        } break;
+        case "down": {
+          dy = bulletSpeed;
+        } break;
+        case "left": {
+          dx = -bulletSpeed;
+        } break;
+        case "right": {
+          dx = bulletSpeed;
+        } break;
+      }
+
+      Game.bullets.push({
+        dx: dx,
+        dy: dy,
+        width: 10,
+        height: 10,
+        position: {
+          x: Game.playerPosition.x,
+          y: Game.playerPosition.y,
+        },
+      });
+    };
+
+    console.log(Game.bullets);
 
     // Draw Player
     drawRectangle(
@@ -261,7 +302,6 @@ function run() {
       alpha: 1.0,
     };
 
-
     drawRectangle(
       gl,
       glLocations,
@@ -271,6 +311,22 @@ function run() {
       tile.position.x,
       tile.position.y
     );
+
+    // DrawBullets
+    Game.bullets.forEach(function(bullet) {
+      drawRectangle(
+        gl,
+        glLocations,
+        Game.bulletColor,
+        bullet.width,
+        bullet.height,
+        bullet.x,
+        bullet.y
+      )
+    })
+
+    // Store input state
+    Game.spaceWasPressed = Game.spaceIsPressed;
 
     Game.tLastRender = tFrame;
 
