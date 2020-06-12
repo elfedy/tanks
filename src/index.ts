@@ -99,7 +99,7 @@ function run() {
       b: 0.5,
       alpha: 1.0,
     },
-    playerBulletSpeed: 400,
+    playerBulletSpeed: 800,
 
     // Other Entities
     bullets: [],
@@ -244,34 +244,36 @@ function run() {
 
     // Update bullets positions
     Game.bullets.forEach(function(bullet) {
-      bullet.position.x += bullet.dx
-      bullet.position.y += bullet.dy
+      console.log(bullet);
+      bullet.position.x += (bullet.vx * dt / 1000);
+      bullet.position.y += (bullet.vy * dt / 1000);
     });
 
     // Bullet Firing
     if(Game.spaceIsPressed && !Game.spaceWasPressed) {
       var bulletSpeed = Game.playerBulletSpeed;
-      var dx = 0;
-      var dy = 0;
+      console.log(bulletSpeed);
+      var vx = 0;
+      var vy = 0;
 
       switch(Game.playerDirection) {
         case "up": {
-          dy = -bulletSpeed;
+          vy = -bulletSpeed;
         } break;
         case "down": {
-          dy = bulletSpeed;
+          vy = bulletSpeed;
         } break;
         case "left": {
-          dx = -bulletSpeed;
+          vx = -bulletSpeed;
         } break;
         case "right": {
-          dx = bulletSpeed;
+          vx = bulletSpeed;
         } break;
       }
 
       Game.bullets.push({
-        dx: dx,
-        dy: dy,
+        vx: vx,
+        vy: vy,
         width: 10,
         height: 10,
         position: {
@@ -320,8 +322,8 @@ function run() {
         Game.bulletColor,
         bullet.width,
         bullet.height,
-        bullet.x,
-        bullet.y
+        bullet.position.x,
+        bullet.position.y,
       )
     })
 
