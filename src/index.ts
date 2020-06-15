@@ -81,6 +81,8 @@ function run() {
     arrowUpIsPressed:false,
     arrowRightIsPressed: false,
     arrowLeftIsPressed:false,
+    lastDirectionPressed: null,
+
     spaceIsPressed: false,
     spaceWasPressed: false,
 
@@ -88,7 +90,7 @@ function run() {
     playerWidth: 40,
     playerHeight: 40,
     playerSpeed: 300,
-    playerDirection: null,
+    playerDirection: "up",
     playerPosition: {
       x: 10,
       y: 10
@@ -104,9 +106,9 @@ function run() {
     // Other Entities
     bullets: [],
     bulletColor: {
-      r: 0,
-      g: 0,
-      b: 0,
+      r: 1,
+      g: 1,
+      b: 1,
       alpha: 1.0,
     },
   }
@@ -116,19 +118,19 @@ function run() {
     switch(e.code) {
       case 'ArrowUp': {
         Game.arrowUpIsPressed = true;
-        Game.playerDirection = "up";
+        Game.lastDirectionPressed = "up";
       } break;
       case 'ArrowDown': {
         Game.arrowDownIsPressed = true;
-        Game.playerDirection = "down";
+        Game.lastDirectionPressed = "down";
       } break;
       case 'ArrowRight': {
         Game.arrowRightIsPressed = true;
-        Game.playerDirection = "right";
+        Game.lastDirectionPressed = "right";
       } break;
       case 'ArrowLeft': {
         Game.arrowLeftIsPressed = true;
-        Game.playerDirection = "left";
+        Game.lastDirectionPressed = "left";
       } break;
       case 'Space': {
         Game.spaceIsPressed = true;
@@ -149,19 +151,15 @@ function run() {
     switch(e.code) {
       case 'ArrowUp': {
         Game.arrowUpIsPressed = false;
-        pickPlayerDirection(Game)
       } break;
       case 'ArrowDown': {
         Game.arrowDownIsPressed = false;
-        pickPlayerDirection(Game)
       } break;
       case 'ArrowRight': {
         Game.arrowRightIsPressed = false;
-        pickPlayerDirection(Game)
       } break;
       case 'ArrowLeft': {
         Game.arrowLeftIsPressed = false;
-        pickPlayerDirection(Game)
       } break;
       case 'Space': {
         Game.spaceIsPressed = false;
@@ -175,20 +173,46 @@ function run() {
      * DRAW
      */
     // Clear the canvas
+    gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     // Update 
     var dt = tFrame - Game.tLastRender;
+    var isMoving = false;
     var dx = 0;
     var dy = 0;
-    if(Game.playerDirection == "right") {
-      dx += Game.playerSpeed * dt / 1000;
-    } else if(Game.playerDirection == "left") {
-      dx -= Game.playerSpeed * dt / 1000;
-    } else if(Game.playerDirection == "up") {
-      dy -= Game.playerSpeed * dt / 1000;
-    } else if(Game.playerDirection == "down") {
-      dy += Game.playerSpeed * dt / 1000;
+
+    // Check Player direction and movement
+    if(Game.lastDirectionPressed) {
+      var pressedDirections = [];
+      if(Game.arrowUpIsPressed) { pressedDirections.push("up") };
+      if(Game.arrowDownIsPressed) { pressedDirections.push("down") };
+      if(Game.arrowLeftIsPressed) { pressedDirections.push("left") };
+      if(Game.arrowRightIsPressed) { pressedDirections.push("right") };
+
+      if(pressedDirections.length > 0) {
+        isMoving = true;
+        if(pressedDirections.indexOf(Game.lastDirectionPressed) !== -1) {
+          Game.playerDirection = Game.lastDirectionPressed;
+        } else {
+          // Pick one of the pressed directions
+          Game.playerDirection = pressedDirections.pop();
+        }
+      } else {
+        Game.playerDirection = Game.lastDirectionPressed;
+      }
+    }
+
+    if(isMoving) {
+      if(Game.playerDirection === "right") {
+        dx += Game.playerSpeed * dt / 1000;
+      } else if(Game.playerDirection === "left") {
+        dx -= Game.playerSpeed * dt / 1000;
+      } else if(Game.playerDirection === "up") {
+        dy -= Game.playerSpeed * dt / 1000;
+      } else if(Game.playerDirection === "down") {
+        dy += Game.playerSpeed * dt / 1000;
+      }
     }
 
     var tile = {
@@ -353,7 +377,7 @@ function pickPlayerDirection(Game) {
   } else if(Game.arrowDownIsPressed) {
     Game.playerDirection = "down";
   } else {
-    Game.playerDirection = null;
+    Game.playerDirection = Game.playerDirection;
   }
 }
 
