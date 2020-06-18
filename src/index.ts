@@ -102,15 +102,25 @@ function run() {
       alpha: 1.0,
     },
     playerBulletSpeed: 800,
+    playerBullet: null,
 
     // Other Entities
-    bullets: [],
     bulletColor: {
       r: 1,
       g: 1,
       b: 1,
       alpha: 1.0,
     },
+    tiles: [
+      {
+        position: {
+          x: 100,
+          y: 100,
+        },
+        width: 40,
+        height: 40
+      }
+    ]
   }
 
   // EVENT LISTENERS
@@ -215,16 +225,6 @@ function run() {
       }
     }
 
-    var tile = {
-      position: {
-        x: 100,
-        y: 100,
-      },
-      width: 40,
-      height: 40,
-    }
-
-    // Update player position
     let newPlayerPosition = 
       {
         x: Game.playerPosition.x += dx,
@@ -237,46 +237,69 @@ function run() {
     newPlayerPosition.y =
       capToBoundaries(newPlayerPosition.y, Game.playerHeight / 2, Game.levelHeight - Game.playerHeight / 2)
     
-    // collision with tile
+    // player collision with tiles
     var playerBoundaries = getRectangleBoundaries(newPlayerPosition, Game.playerWidth, Game.playerHeight);
-    var tileBoundaries = getRectangleBoundaries(tile.position, tile.width, tile.height);
 
-    var topBoundaryInside = (playerBoundaries.top > tileBoundaries.top && playerBoundaries.top < tileBoundaries.bottom);
-    var bottomBoundaryInside = (playerBoundaries.bottom < tileBoundaries.bottom && playerBoundaries.bottom > tileBoundaries.top);
-    var leftBoundaryInside = (playerBoundaries.left < tileBoundaries.right) && (playerBoundaries.right > tileBoundaries.left)
-    var rightBoundaryInside = (playerBoundaries.right < tileBoundaries.left) && (playerBoundaries.right > tileBoundaries.right)
+    for(var i = 0; i < Game.tiles.length; i++) {
+      var tile = Game.tiles[i];
+      var tileBoundaries = getRectangleBoundaries(tile.position, tile.width, tile.height);
 
-    if((topBoundaryInside || bottomBoundaryInside) && (leftBoundaryInside || rightBoundaryInside)) {
-      if(Game.playerDirection == "up" || Game.playerDirection == "down") {
-        if(Game.playerPosition.y > tileBoundaries.bottom) {
-          newPlayerPosition.y = tileBoundaries.bottom + Game.playerHeight / 2;
-        } else {
-          newPlayerPosition.y = tileBoundaries.top - Game.playerWidth / 2;
+      var colission = rectangleBoundariesAreColliding(playerBoundaries, tileBoundaries);
+      if(colission) {
+        if(Game.playerDirection == "up" || Game.playerDirection == "down") {
+          if(Game.playerPosition.y > tileBoundaries.bottom) {
+            newPlayerPosition.y = tileBoundaries.bottom + Game.playerHeight / 2;
+          } else {
+            newPlayerPosition.y = tileBoundaries.top - Game.playerWidth / 2;
+          }
         }
-      }
 
-      if(Game.playerDirection == "left" || Game.playerDirection == "right") {
-        if(Game.playerPosition.x < tileBoundaries.left) {
-          newPlayerPosition.x = tileBoundaries.left - Game.playerWidth / 2;
-        } else {
-          newPlayerPosition.x = tileBoundaries.right + Game.playerWidth / 2;
+        if(Game.playerDirection == "left" || Game.playerDirection == "right") {
+          if(Game.playerPosition.x < tileBoundaries.left) {
+            newPlayerPosition.x = tileBoundaries.left - Game.playerWidth / 2;
+          } else {
+            newPlayerPosition.x = tileBoundaries.right + Game.playerWidth / 2;
+          }
         }
-      }
-    } 
+      } 
+    }
 
     Game.playerPosition = newPlayerPosition;
 
-    // Update bullets positions
-    Game.bullets.forEach(function(bullet) {
-      console.log(bullet);
+    // Update player bullet position
+    if(Game.playerBullet) {
+      var bullet = Game.playerBullet;
       bullet.position.x += (bullet.vx * dt / 1000);
       bullet.position.y += (bullet.vy * dt / 1000);
-    });
+
+      var bulletBoundaries = getRectangleBoundaries(bullet.position, bullet.width, bullet.height);
+
+      // bullet collision with tiles
+      var collision = false;
+      for(var j = 0; j < Game.tiles.length; j++) {
+        var tile = Game.tiles[j];
+        var tileBoundaries = getRectangleBoundaries(tile.position, tile.width, tile.height);
+        collision = rectangleBoundariesAreColliding(bulletBoundaries, tileBoundaries);
+        if(collision) {
+          break;
+        }
+      }
+
+      // bullet collsion with boundaries
+      if(bullet.position.x < 0 || bullet.position.x > Game.levelWidth || bullet.position.y < 0 || bullet.position.y > Game.levelHeight) {
+        collision = true;
+      }
+
+      if(collision) {
+        // Remove Bullet
+        Game.playerBullet = null;
+        i--
+      }
+    }
 
     // Bullet Firing
-    if(Game.spaceIsPressed && !Game.spaceWasPressed) {
+    if(Game.spaceIsPressed && !Game.spaceWasPressed && !Game.playerBullet) {
       var bulletSpeed = Game.playerBulletSpeed;
-      console.log(bulletSpeed);
       var vx = 0;
       var vy = 0;
 
@@ -295,7 +318,7 @@ function run() {
         } break;
       }
 
-      Game.bullets.push({
+      Game.playerBullet = {
         vx: vx,
         vy: vy,
         width: 10,
@@ -304,10 +327,9 @@ function run() {
           x: Game.playerPosition.x,
           y: Game.playerPosition.y,
         },
-      });
+      };
     };
 
-    console.log(Game.bullets);
 
     // Draw Player
     drawRectangle(
@@ -328,28 +350,30 @@ function run() {
       alpha: 1.0,
     };
 
-    drawRectangle(
-      gl,
-      glLocations,
-      brickColor,
-      tile.width,
-      tile.height,
-      tile.position.x,
-      tile.position.y
-    );
-
-    // DrawBullets
-    Game.bullets.forEach(function(bullet) {
+    Game.tiles.forEach(function(tile) {
       drawRectangle(
         gl,
         glLocations,
-        Game.bulletColor,
-        bullet.width,
-        bullet.height,
-        bullet.position.x,
-        bullet.position.y,
-      )
+        brickColor,
+        tile.width,
+        tile.height,
+        tile.position.x,
+        tile.position.y
+      );
     })
+
+    // DrawBullets
+    if(Game.playerBullet) {
+        drawRectangle(
+          gl,
+          glLocations,
+          Game.bulletColor,
+          Game.playerBullet.width,
+          Game.playerBullet.height,
+          Game.playerBullet.position.x,
+          Game.playerBullet.position.y
+        )
+    }
 
     // Store input state
     Game.spaceWasPressed = Game.spaceIsPressed;
@@ -387,6 +411,17 @@ type RectangleBoundaries = {
   right: number,
   left: number,
 };
+
+function rectangleBoundariesAreColliding(a: RectangleBoundaries, b: RectangleBoundaries)
+: boolean
+{
+    var topBoundaryInside = (a.top > b.top && a.top < b.bottom);
+    var bottomBoundaryInside = (a.bottom < b.bottom && a.bottom > b.top);
+    var leftBoundaryInside = (a.left < b.right) && (a.right > b.left)
+    var rightBoundaryInside = (a.right < b.left) && (a.right > b.right)
+
+    return (topBoundaryInside || bottomBoundaryInside) && (leftBoundaryInside || rightBoundaryInside)
+}
 
 function getRectangleBoundaries(position: EntityPosition, width: number, height: number) : RectangleBoundaries {
   return {
