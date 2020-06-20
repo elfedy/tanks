@@ -236,13 +236,13 @@ function run() {
 
     if(isMoving) {
       if(Game.playerDirection === "right") {
-        dx += Game.playerSpeed * dt / 1000;
+        dx += Math.floor(Game.playerSpeed * dt / 1000);
       } else if(Game.playerDirection === "left") {
-        dx -= Game.playerSpeed * dt / 1000;
+        dx -= Math.floor(Game.playerSpeed * dt / 1000);
       } else if(Game.playerDirection === "up") {
-        dy -= Game.playerSpeed * dt / 1000;
+        dy -= Math.floor(Game.playerSpeed * dt / 1000);
       } else if(Game.playerDirection === "down") {
-        dy += Game.playerSpeed * dt / 1000;
+        dy += Math.floor(Game.playerSpeed * dt / 1000);
       }
     }
 
@@ -265,21 +265,21 @@ function run() {
       var tile = Game.tiles[i];
       var tileBoundaries = getRectangleBoundaries(tile.position, tile.width, tile.height);
 
-      var colission = rectangleBoundariesAreColliding(playerBoundaries, tileBoundaries);
-      if(colission) {
+      var collission = rectangleBoundariesAreColliding(playerBoundaries, tileBoundaries);
+      if(collission) {
         if(Game.playerDirection == "up" || Game.playerDirection == "down") {
           if(Game.playerPosition.y > tileBoundaries.bottom) {
-            newPlayerPosition.y = tileBoundaries.bottom + Game.playerHeight / 2;
+            newPlayerPosition.y = Math.round(tileBoundaries.bottom + Game.playerHeight / 2);
           } else {
-            newPlayerPosition.y = tileBoundaries.top - Game.playerWidth / 2;
+            newPlayerPosition.y = Math.round(tileBoundaries.top - Game.playerWidth / 2);
           }
         }
 
         if(Game.playerDirection == "left" || Game.playerDirection == "right") {
           if(Game.playerPosition.x < tileBoundaries.left) {
-            newPlayerPosition.x = tileBoundaries.left - Game.playerWidth / 2;
+            newPlayerPosition.x = Math.round(tileBoundaries.left - Game.playerWidth / 2);
           } else {
-            newPlayerPosition.x = tileBoundaries.right + Game.playerWidth / 2;
+            newPlayerPosition.x = Math.round(tileBoundaries.right + Game.playerWidth / 2);
           }
         }
       } 
@@ -290,8 +290,8 @@ function run() {
     // Update player bullet position
     if(Game.playerBullet) {
       var bullet = Game.playerBullet;
-      bullet.position.x += (bullet.vx * dt / 1000);
-      bullet.position.y += (bullet.vy * dt / 1000);
+      bullet.position.x += Math.round(bullet.vx * dt / 1000);
+      bullet.position.y += Math.round(bullet.vy * dt / 1000);
 
       var bulletBoundaries = getRectangleBoundaries(bullet.position, bullet.width, bullet.height);
 
@@ -446,7 +446,7 @@ function rectangleBoundariesAreColliding(a: RectangleBoundaries, b: RectangleBou
   var left = a.right <= b.left;
   var right = a.left >= b.right;
 
-  return !(below || above || left || right);
+  return !(a.top >= b.bottom || a.bottom <= b.top || a.right <= b.left || a.left >= b.right);
 }
 
 function getRectangleBoundaries(position: EntityPosition, width: number, height: number) : RectangleBoundaries {
