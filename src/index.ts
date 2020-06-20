@@ -305,6 +305,7 @@ function run() {
           collision = true;
           if(tile.tileType == "brick") {
             Game.tiles.splice(j, 1);
+            j--;
           }
         }
       }
