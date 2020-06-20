@@ -9,6 +9,36 @@ function run() {
   var canvas = <HTMLCanvasElement> document.getElementById('canvas');
   var gl = canvas.getContext('webgl');
 
+
+  // tile map: 640 x 480 means 24 rows of 32 tiles
+
+  var tileMap = [ 
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','b','b','x','x','b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','b','b','x','x','b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','b','b','x','x','b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','b','b','x','x','b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','b','b','x','x','b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','b','b','x','x','b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','b','b','x','x','b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','b','b','x','x','b','b','x','x','x','x','x','b','x','b','x','x','b','x','x','b','b','b','x','x','b','x','x','x','x','x'],
+    [ 'x','x','b','b','x','x','b','b','x','x','x','x','x','b','b','b','x','b','x','b','x','b','x','x','x','b','x','b','x','x','x','x'],
+    [ 'x','x','b','b','x','x','b','b','x','x','x','x','x','b','x','b','x','b','b','b','x','b','b','b','x','b','b','b','x','x','x','x'],
+    [ 'x','x','b','b','x','x','b','b','x','x','x','x','x','b','x','b','x','b','x','b','x','b','b','b','x','b','x','b','x','x','x','x'],
+    [ 'x','x','b','b','x','x','b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','b','b','x','x','b','b','b','b','b','b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','b','b','x','x','b','b','b','b','b','b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x']
+  ]
+
   if(gl === null) {
     alert("Unable to initialize WebGL. Your browser or machine may not support it.");
     return;
@@ -111,16 +141,7 @@ function run() {
       b: 1,
       alpha: 1.0,
     },
-    tiles: [
-      {
-        position: {
-          x: 100,
-          y: 100,
-        },
-        width: 40,
-        height: 40
-      }
-    ]
+    tiles: parseTileMap(tileMap), 
   }
 
   // EVENT LISTENERS
@@ -279,9 +300,12 @@ function run() {
       for(var j = 0; j < Game.tiles.length; j++) {
         var tile = Game.tiles[j];
         var tileBoundaries = getRectangleBoundaries(tile.position, tile.width, tile.height);
-        collision = rectangleBoundariesAreColliding(bulletBoundaries, tileBoundaries);
-        if(collision) {
-          break;
+        var collidedWithTile = rectangleBoundariesAreColliding(bulletBoundaries, tileBoundaries);
+        if(collidedWithTile) {
+          collision = true;
+          if(tile.tileType == "brick") {
+            Game.tiles.splice(j, 1);
+          }
         }
       }
 
@@ -293,7 +317,7 @@ function run() {
       if(collision) {
         // Remove Bullet
         Game.playerBullet = null;
-        i--
+        i--;
       }
     }
 
@@ -343,18 +367,20 @@ function run() {
     )
 
     // Draw Tile
-    var brickColor = {
-      r: 0.67,
-      g: 0.38,
-      b: 0.3,
-      alpha: 1.0,
+    var tileColors = {
+      brick: {
+        r: 0.67,
+        g: 0.38,
+        b: 0.3,
+        alpha: 1.0,
+      },
     };
 
     Game.tiles.forEach(function(tile) {
       drawRectangle(
         gl,
         glLocations,
-        brickColor,
+        tileColors[tile.tileType],
         tile.width,
         tile.height,
         tile.position.x,
@@ -434,6 +460,33 @@ function getRectangleBoundaries(position: EntityPosition, width: number, height:
 };
 
 // DRAW UTILS
+// NOTE(Fede): Tile map is an array of 24 arrays (rows) of 32 tiles
+// Returns the corresponding tile entities
+function parseTileMap(tileMap) {
+  let tiles = [];
+  for(var i = 0; i < 24; i++) {
+    for(var j = 0; j < 32; j++) {
+      if(tileMap[i][j] !== 'x') {
+        var tileTypes = {
+            b: 'brick',
+            g: 'grass',
+            s: 'steel',
+          };
+
+        tiles.push({
+          position: {
+            x: 10 + 20 * j, 
+            y: 10 + 20 * i,
+          },
+          tileType: tileTypes[tileMap[i][j]],
+          width: 20,
+          height: 20
+        });
+      }
+    }
+  }
+  return tiles;
+}
 
 function squareVertices(width: number, height: number): number[] {
   return [
@@ -472,8 +525,6 @@ function drawRectangle(gl, glLocations, color, width, height, x, y)
 }
 
 // SHADER MANAGEMENT
-
-
 function initShaderProgram(gl, vsSource, fsSource) {
   var vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
   var fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
@@ -515,6 +566,7 @@ function loadShader(gl, type, source) {
   return shader;
 }
 
+// MATRICES
 var mat3 = {
   identity: function() {
     return [
