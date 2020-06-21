@@ -19,8 +19,8 @@ function run() {
     [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
     [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
     [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','s','s','x','g','g','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','s','s','x','g','g','x','x','x','x','x','x','x','x','x','x','x'],
     [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
     [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
     [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
@@ -263,8 +263,12 @@ function run() {
 
     for(var i = 0; i < Game.tiles.length; i++) {
       var tile = Game.tiles[i];
-      var tileBoundaries = getRectangleBoundaries(tile.position, tile.width, tile.height);
 
+      if(tile.tileType === 'g') {
+        continue;
+      }
+
+      var tileBoundaries = getRectangleBoundaries(tile.position, tile.width, tile.height);
       var collission = rectangleBoundariesAreColliding(playerBoundaries, tileBoundaries);
       if(collission) {
         if(Game.playerDirection == "up" || Game.playerDirection == "down") {
@@ -299,11 +303,14 @@ function run() {
       var collision = false;
       for(var j = 0; j < Game.tiles.length; j++) {
         var tile = Game.tiles[j];
+        if(tile.tileType === 'g') {
+          continue;
+        }
         var tileBoundaries = getRectangleBoundaries(tile.position, tile.width, tile.height);
         var collidedWithTile = rectangleBoundariesAreColliding(bulletBoundaries, tileBoundaries);
         if(collidedWithTile) {
           collision = true;
-          if(tile.tileType == "brick") {
+          if(tile.tileType == "b") {
             Game.tiles.splice(j, 1);
             j--;
           }
@@ -369,11 +376,23 @@ function run() {
 
     // Draw Tile
     var tileColors = {
-      brick: {
+      b: {
         r: 0.67,
         g: 0.38,
         b: 0.3,
         alpha: 1.0,
+      },
+      s: {
+        r: 0.8,
+        g: 0.8,
+        b: 0.8,
+        alpha: 1.0,
+      },
+      g: {
+        r: 0.4,
+        g: 0.6,
+        b: 0.1,
+        alpha: 0.5,
       },
     };
 
@@ -468,18 +487,13 @@ function parseTileMap(tileMap) {
   for(var i = 0; i < 24; i++) {
     for(var j = 0; j < 32; j++) {
       if(tileMap[i][j] !== 'x') {
-        var tileTypes = {
-            b: 'brick',
-            g: 'grass',
-            s: 'steel',
-          };
 
         tiles.push({
           position: {
             x: 10 + 20 * j, 
             y: 10 + 20 * i,
           },
-          tileType: tileTypes[tileMap[i][j]],
+          tileType: tileMap[i][j],
           width: 20,
           height: 20
         });
