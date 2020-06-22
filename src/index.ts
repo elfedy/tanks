@@ -303,7 +303,7 @@ function run() {
       var collision = false;
       for(var j = 0; j < Game.tiles.length; j++) {
         var tile = Game.tiles[j];
-        if(tile.tileType === 'g') {
+        if(tile.tileType === 'g' || tile.tileType === 'w') {
           continue;
         }
         var tileBoundaries = getRectangleBoundaries(tile.position, tile.width, tile.height);
