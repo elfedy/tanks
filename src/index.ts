@@ -30,8 +30,8 @@ function run() {
     [ 'x','x','x','x','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
     [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
     [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','w','w','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','w','w','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
     [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
     [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
     [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
@@ -364,15 +364,18 @@ function run() {
 
 
     // Draw Player
-    drawRectangle(
+    drawTank(
       gl,
       glLocations,
-      Game.playerColor,
-      Game.playerWidth,
-      Game.playerHeight,
-      Game.playerPosition.x, 
-      Game.playerPosition.y
+      {
+        color: Game.playerColor,
+        width: Game.playerWidth,
+        height: Game.playerHeight,
+        position: Game.playerPosition,
+        direction: Game.playerDirection,
+      }
     )
+      
 
     // Draw Tile
     var tileColors = {
@@ -392,6 +395,12 @@ function run() {
         r: 0.4,
         g: 0.6,
         b: 0.1,
+        alpha: 0.5,
+      },
+      w: {
+        r: 0.05,
+        g: 0.05,
+        b: 0.6,
         alpha: 0.5,
       },
     };
@@ -503,14 +512,18 @@ function parseTileMap(tileMap) {
   return tiles;
 }
 
-function squareVertices(width: number, height: number): number[] {
+//NOTE(Fede): x and y mean the top left of the rectangle here, contrary to what is used
+// to position entities. The this rectangle is translated to using a translation
+// matrix with x, y relative to the center of the rectangle. Maybe I should change this
+// here but it makes the vertex calculation more straightforward
+function squareVertices(width: number, height: number, x: number, y: number): number[] {
   return [
-    0, 0,
-    0, height,
-    width, height,
-    0, 0,
-    width, 0,
-    width, height,
+    x, y,
+    x, y + height,
+    x + width, y + height,
+    x, y,
+    x + width, y,
+    x + width, y + height,
   ]
 }
 
@@ -527,7 +540,7 @@ function drawRectangle(gl, glLocations, color, width, height, x, y)
     gl.uniformMatrix3fv(glLocations.uMatrix, false, matrix);
 
     // Add vertices to array buffer (Requires a buffer to been previously bound to gl.ARRAY_BUFFER)
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(squareVertices(width, height)), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(squareVertices(width, height, 0, 0)), gl.STATIC_DRAW);
 
     // Define and set color for rectangle
     var colorArray = [color.r, color.g, color.b, color.alpha]
@@ -536,6 +549,49 @@ function drawRectangle(gl, glLocations, color, width, height, x, y)
     var primitiveType = gl.TRIANGLES;
     var offset = 0;
     var count = 6;
+    gl.drawArrays(primitiveType, offset, count);
+}
+
+function drawTank(gl, glLocations, tank) {
+    // Rotation angle
+    var theta = 0;
+    switch(tank.direction) {
+      case('down'):
+        theta = Math.PI;
+        break;
+      case('right'):
+        theta = 3 / 2 * Math.PI;
+        break;
+      case('left'):
+        theta = Math.PI / 2;
+        break;
+    }
+
+    // Set matices
+    var matrixProjection = mat3.projection(gl.canvas.width, gl.canvas.height);
+    var matrixChangeOrigin = mat3.translation(-tank.width / 2, -tank.height / 2);
+    var matrixRotation = mat3.rotation(theta)
+    var matrixTranslation = mat3.translation(tank.position.x, tank.position.y);
+    var matrix = mat3.identity()
+    matrix = mat3.multiply(matrix, matrixProjection);
+    matrix = mat3.multiply(matrix, matrixTranslation);
+    matrix = mat3.multiply(matrix, matrixRotation);
+    matrix = mat3.multiply(matrix, matrixChangeOrigin);
+    gl.uniformMatrix3fv(glLocations.uMatrix, false, matrix);
+
+    // Add vertices to array buffer (Requires a buffer to been previously bound to gl.ARRAY_BUFFER)
+    var bodyVertices = squareVertices(tank.width, tank.height * 3 / 4, 0, tank.height * 1 / 4);
+    var cannonVertices = squareVertices(tank.width / 4, tank.height, tank.width * 3 / 8, 0);
+    var tankVertices = bodyVertices.concat(cannonVertices)
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(tankVertices), gl.STATIC_DRAW);
+
+    // Define and set color for rectangle
+    var colorArray = [tank.color.r, tank.color.g, tank.color.b, tank.color.alpha]
+    gl.uniform4fv(glLocations.uColor, colorArray);
+
+    var primitiveType = gl.TRIANGLES;
+    var offset = 0;
+    var count = 12;
     gl.drawArrays(primitiveType, offset, count);
 }
 
