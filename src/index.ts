@@ -51,14 +51,14 @@ function run() {
     [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
     [ 'x','x','x','x','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
     [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'x','x','x','w','w','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'x','x','x','w','w','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x']
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','b','b','x'],
+    [ 'x','x','x','w','w','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','b','b','x'],
+    [ 'x','x','x','w','w','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','b','b','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','b','b','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','w','w','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','w','w','x'],
+    [ 'b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','s','s','x'],
+    [ 'b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','s','s','x']
   ]
 
   if(gl === null) {
@@ -331,86 +331,13 @@ function run() {
     if(Game.playerTank.bullet) {
       bulletUpdate(Game.playerTank, Game, dt);
     }
-    /*
-     *
-    if(Game.playerBullet) {
-      var bullet = Game.playerBullet;
-      bullet.position.x += Math.round(bullet.vx * dt / 1000);
-      bullet.position.y += Math.round(bullet.vy * dt / 1000);
 
-      var bulletBoundaries = getRectangleBoundaries(bullet.position, bullet.width, bullet.height);
-
-      // bullet collision with tiles
-      var collision = false;
-      for(var j = 0; j < Game.tiles.length; j++) {
-        var tile = Game.tiles[j];
-        if(tile.tileType === 'g' || tile.tileType === 'w') {
-          continue;
-        }
-        var tileBoundaries = getRectangleBoundaries(tile.position, tile.width, tile.height);
-        var collidedWithTile = rectangleBoundariesAreColliding(bulletBoundaries, tileBoundaries);
-        if(collidedWithTile) {
-          collision = true;
-          if(tile.tileType == "b") {
-            Game.tiles.splice(j, 1);
-            j--;
-          }
-        }
-      }
-
-      // bullet collsion with boundaries
-      if(bullet.position.x < 0 || bullet.position.x > Game.levelWidth || bullet.position.y < 0 || bullet.position.y > Game.levelHeight) {
-        collision = true;
-      }
-
-      if(collision) {
-        // Remove Bullet
-        Game.playerBullet = null;
-        i--;
-      }
-    }
-    /*
-
-    // Update enemy bullet position
+    // Update enemies bullet position
     Game.enemies.forEach(function(enemy) {
-      if(enemy.bullet) {
-        var bullet = enemy.bullet;
-        bullet.position.x += Math.round(bullet.vx * dt / 1000);
-        bullet.position.y += Math.round(bullet.vy * dt / 1000);
-
-        var bulletBoundaries = getRectangleBoundaries(bullet.position, bullet.width, bullet.height);
-
-        // bullet collision with tiles
-        var collision = false;
-        for(var j = 0; j < Game.tiles.length; j++) {
-          var tile = Game.tiles[j];
-          if(tile.tileType === 'g' || tile.tileType === 'w') {
-            continue;
-          }
-          var tileBoundaries = getRectangleBoundaries(tile.position, tile.width, tile.height);
-          var collidedWithTile = rectangleBoundariesAreColliding(bulletBoundaries, tileBoundaries);
-          if(collidedWithTile) {
-            collision = true;
-            if(tile.tileType == "b") {
-              Game.tiles.splice(j, 1);
-              j--;
-            }
-          }
-        }
-
-        // bullet collsion with boundaries
-        if(bullet.position.x < 0 || bullet.position.x > Game.levelWidth || bullet.position.y < 0 || bullet.position.y > Game.levelHeight) {
-          collision = true;
-        }
-
-        if(collision) {
-          // Remove Bullet
-          Game.playerBullet = null;
-          i--;
-        }
+      if(enemy.tank.bullet) {
+        bulletUpdate(enemy.tank, Game, dt);
       }
     });
-     */
 
     // Player Bullet Firing
     if(Game.spaceIsPressed && !Game.spaceWasPressed && !Game.playerTank.bullet) {
@@ -419,9 +346,11 @@ function run() {
 
     // Enemy Bullet Firing
     Game.enemies.forEach(function(enemy) {
-      // If bullet is not fired, fire one with 4/5 probability
+      // TODO(Fede): This determines every frame if bullet will fire or not
+      // That will make fire rate dependent of the frame rate, so maybe the randomness
+      // should be about how many seconds will pass in order for the bullet to be fired
       if(!enemy.tank.bullet) {
-        if(Math.random() > 0.2) {
+        if(Math.random() > 0.98) {
           bulletCreate(500, enemy.tank);
         }
       }
@@ -502,6 +431,12 @@ function run() {
     if(Game.playerTank.bullet) {
       bulletDraw(gl, glLocations, Game, Game.playerTank.bullet);
     }
+
+    Game.enemies.forEach(function(enemy) {
+      if(enemy.tank.bullet) {
+        bulletDraw(gl, glLocations, Game, enemy.tank.bullet);
+      }
+    });
 
     // Store input state
     Game.spaceWasPressed = Game.spaceIsPressed;
@@ -586,7 +521,9 @@ function bulletCreate(bulletSpeed: number, tank: Tank) {
 
 function bulletUpdate(tank: Tank, Game, dt) {
     var bullet = tank.bullet;
-    if(!bullet) return;
+    if(!bullet) { 
+      return;
+    }
     bullet.position.x += Math.round(bullet.vx * dt / 1000);
     bullet.position.y += Math.round(bullet.vy * dt / 1000);
 
