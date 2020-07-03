@@ -12,9 +12,12 @@ type EntityPosition = {
 }
 
 type Tank = {
+  tankType: string,
   position: EntityPosition,
   direction: string,
+  speed: number,
   bullet: Bullet,
+  bulletSpeed: number,
 }
 
 type Bullet = {
@@ -42,19 +45,19 @@ function run() {
     [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
     [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
     [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','s','s','x','g','g','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','s','s','x','g','g','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'b','b','x','x','b','b','x','x','b','b','x','x','b','b','x','x','s','s','b','g','g','b','b','b','b','b','b','b','b','b','b','b'],
+    [ 'b','b','x','x','b','b','x','x','b','b','x','x','b','b','x','x','x','x','x','x','x','b','b','b','b','b','b','b','b','b','b','b'],
     [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
     [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'x','x','x','x','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','b','b','x'],
-    [ 'x','x','x','w','w','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','b','b','x'],
-    [ 'x','x','x','w','w','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','b','b','x'],
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','b','b','x'],
+    [ 'b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b'],
+    [ 'b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b'],
+    [ 'b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b'],
+    [ 'b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b'],
+    [ 'b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b'],
+    [ 'b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b'],
+    [ 'b','b','b','w','w','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b'],
+    [ 'b','b','b','w','w','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b'],
+    [ 'b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b'],
     [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','w','w','x'],
     [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','w','w','x'],
     [ 'b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','s','s','x'],
@@ -139,34 +142,70 @@ function run() {
     spaceWasPressed: false,
 
     // Player
-    playerWidth: 40,
-    playerHeight: 40,
-    playerSpeed: 300,
     playerColor: {
       r: 0.1,
       g: 0.8,
       b: 0.5,
       alpha: 1.0,
     },
-    playerBulletSpeed: 800,
     playerTank: {
+      tankType: 'playerNormal',
       position: { x: 40, y: 40 },
       direction: "up",
-      bullet: null
+      speed: 300,
+      bullet: null,
+      bulletSpeed: 800,
     },
 
     // Enemies
+    enemyColor: {
+      r: 0.8,
+      g: 0.2,
+      b: 0.1,
+      alpha: 1.0,
+    },
     enemies: [
       {
-        enemyType: 'normalTank',
         tank: {
+          tankType: 'enemyNormal',
           position: {
             x: 600,
             y: 40,
           },
           direction: 'down',
+          speed: 200,
           bullet: null,
+          bulletSpeed: 800,
         },
+        nextDirection: null,
+      },
+      {
+        tank: {
+          tankType: 'enemyNormal',
+          position: {
+            x: 500,
+            y: 40,
+          },
+          direction: 'down',
+          speed: 200,
+          bullet: null,
+          bulletSpeed: 800,
+        },
+        nextDirection: null,
+      },
+      {
+        tank: {
+          tankType: 'enemyNormal',
+          position: {
+            x: 400,
+            y: 40,
+          },
+          direction: 'down',
+          speed: 200,
+          bullet: null,
+          bulletSpeed: 800,
+        },
+        nextDirection: null,
       }
     ],
 
@@ -246,8 +285,6 @@ function run() {
     // Update 
     var dt = tFrame - Game.tLastRender;
     var isMoving = false;
-    var dx = 0;
-    var dy = 0;
 
     // Check Player direction and movement
     if(Game.lastDirectionPressed) {
@@ -270,32 +307,20 @@ function run() {
       }
     }
 
+    var newPlayerPosition = Game.playerTank.position;
     if(isMoving) {
-      if(Game.playerTank.direction === "right") {
-        dx += Math.floor(Game.playerSpeed * dt / 1000);
-      } else if(Game.playerTank.direction === "left") {
-        dx -= Math.floor(Game.playerSpeed * dt / 1000);
-      } else if(Game.playerTank.direction === "up") {
-        dy -= Math.floor(Game.playerSpeed * dt / 1000);
-      } else if(Game.playerTank.direction === "down") {
-        dy += Math.floor(Game.playerSpeed * dt / 1000);
-      }
+      newPlayerPosition = tankEstimateNewPositionForMovement(Game.playerTank, dt);
     }
 
-    let newPlayerPosition = 
-      {
-        x: Game.playerTank.position.x += dx,
-        y: Game.playerTank.position.y += dy,
-      }
-
     // collision with screen limits
+    var playerTankData = tankGetData(Game.playerTank.tankType);
     newPlayerPosition.x = 
-      capToBoundaries(newPlayerPosition.x, Game.playerWidth / 2, Game.levelWidth - Game.playerWidth / 2)
+      capToBoundaries(newPlayerPosition.x, playerTankData.width / 2, Game.levelWidth - playerTankData.width / 2)
     newPlayerPosition.y =
-      capToBoundaries(newPlayerPosition.y, Game.playerHeight / 2, Game.levelHeight - Game.playerHeight / 2)
+      capToBoundaries(newPlayerPosition.y, playerTankData.height / 2, Game.levelHeight - playerTankData.height / 2)
     
     // player collision with tiles
-    var playerBoundaries = getRectangleBoundaries(newPlayerPosition, Game.playerWidth, Game.playerHeight);
+    var playerBoundaries = getRectangleBoundaries(newPlayerPosition, playerTankData.width, playerTankData.height);
 
     for(var i = 0; i < Game.tiles.length; i++) {
       var tile = Game.tiles[i];
@@ -307,25 +332,78 @@ function run() {
       var tileBoundaries = getRectangleBoundaries(tile.position, tile.width, tile.height);
       var collission = rectangleBoundariesAreColliding(playerBoundaries, tileBoundaries);
       if(collission) {
-        if(Game.playerTank.direction== "up" || Game.playerTank.direction == "down") {
-          if(Game.playerTank.position.y > tileBoundaries.bottom) {
-            newPlayerPosition.y = Math.round(tileBoundaries.bottom + Game.playerHeight / 2);
-          } else {
-            newPlayerPosition.y = Math.round(tileBoundaries.top - Game.playerWidth / 2);
-          }
-        }
-
-        if(Game.playerTank.direction == "left" || Game.playerTank.direction == "right") {
-          if(Game.playerTank.position.x < tileBoundaries.left) {
-            newPlayerPosition.x = Math.round(tileBoundaries.left - Game.playerWidth / 2);
-          } else {
-            newPlayerPosition.x = Math.round(tileBoundaries.right + Game.playerWidth / 2);
-          }
-        }
-      } 
+        newPlayerPosition = tankPositionForBoundaryCollision(Game.playerTank, newPlayerPosition, tileBoundaries)
+      }
     }
 
     Game.playerTank.position = newPlayerPosition;
+
+    // Update enemies position
+    Game.enemies.forEach(function(enemy) {
+      if(enemy.nextDirection) {
+        enemy.tank.direction = enemy.nextDirection;
+        enemy.nextDirection = null;
+      }
+      var newEstimatePosition = tankEstimateNewPositionForMovement(enemy.tank, dt);
+      var tankData = tankGetData(enemy.tank.tankType);
+      var shouldPickNewDirection = false;
+      // collision with screen limits
+      var newPosition = {x: newEstimatePosition.x, y: newEstimatePosition.y};
+      newPosition.x = 
+        capToBoundaries(newPosition.x, tankData.width / 2, Game.levelWidth - tankData.width / 2)
+      newPosition.y =
+        capToBoundaries(newPosition.y, tankData.height / 2, Game.levelHeight - tankData.height / 2)
+
+      if((newPosition.x !== newEstimatePosition.x) || (newPosition.y !== newEstimatePosition.y)) {
+        var newIndex = Math.floor(Math.random() * 4);
+        shouldPickNewDirection = true;
+      }
+
+      // enemy collision with tiles
+      var enemyBoundaries = getRectangleBoundaries(newPosition, tankData.width, tankData.height);
+
+      for(var i = 0; i < Game.tiles.length; i++) {
+        var tile = Game.tiles[i];
+
+        if(tile.tileType === 'g') {
+          continue;
+        }
+
+        var tileBoundaries = getRectangleBoundaries(tile.position, tile.width, tile.height);
+        var collision = rectangleBoundariesAreColliding(enemyBoundaries, tileBoundaries);
+        if(collision) {
+          var isCollidingInDirection
+          switch(enemy.tank.direction) {
+            case "up":
+              isCollidingInDirection = enemyBoundaries.top <= enemyBoundaries.bottom;
+              break;
+            case "down":
+              isCollidingInDirection = enemyBoundaries.bottom >= enemyBoundaries.top;
+              break;
+            case "right":
+              isCollidingInDirection = enemyBoundaries.right >= enemyBoundaries.left;
+              break;
+            case "left":
+              isCollidingInDirection = enemyBoundaries.left <= enemyBoundaries.left;
+              break;
+          }
+          if(isCollidingInDirection) {
+            //newPosition = tankPositionForBoundaryCollision(enemy.tank, newPosition, tileBoundaries)
+            newPosition = enemy.tank.position;
+            
+            // pick a new direction at random
+            shouldPickNewDirection = true;
+            break;
+          }
+        }
+      }
+      enemy.tank.position = newPosition;
+
+      if(shouldPickNewDirection) {
+        var newIndex = Math.floor(Math.random() * 4);
+        enemy.nextDirection = ['up', 'down', 'right', 'left'][newIndex];
+      }
+    })
 
     // Update player bullet position
     if(Game.playerTank.bullet) {
@@ -341,7 +419,7 @@ function run() {
 
     // Player Bullet Firing
     if(Game.spaceIsPressed && !Game.spaceWasPressed && !Game.playerTank.bullet) {
-      bulletCreate(Game.playerBulletSpeed, Game.playerTank);
+      bulletCreate(Game.playerTank);
     };
 
     // Enemy Bullet Firing
@@ -350,8 +428,8 @@ function run() {
       // That will make fire rate dependent of the frame rate, so maybe the randomness
       // should be about how many seconds will pass in order for the bullet to be fired
       if(!enemy.tank.bullet) {
-        if(Math.random() > 0.98) {
-          bulletCreate(500, enemy.tank);
+        if(Math.random() > 0.95) {
+          bulletCreate(enemy.tank);
         }
       }
     })
@@ -361,28 +439,17 @@ function run() {
     tankDraw(
       gl,
       glLocations,
-      {
-        color: Game.playerColor,
-        width: Game.playerWidth,
-        height: Game.playerHeight,
-        position: Game.playerTank.position,
-        direction: Game.playerTank.direction,
-      }
+      Game.playerColor,
+      Game.playerTank
     )
 
     // Draw Enemies
     Game.enemies.forEach(function(enemy) {
-      var enemyData = enemyGetData(enemy.enemyType);
       tankDraw(
         gl,
         glLocations,
-        {
-          color: enemyData.color,
-          width: enemyData.width,
-          height: enemyData.height,
-          position: enemy.tank.position,
-          direction: enemy.tank.direction,
-        }
+        Game.enemyColor,
+        enemy.tank
       )
     })
       
@@ -453,21 +520,20 @@ function run() {
 }
 
 // ENTITY DATA
-function enemyGetData(enemyType) {
+function tankGetData(tankType) {
+    console.log(tankType);
     var data =  {
-      normalTank: {
+      playerNormal: {
         width: 40,
         height: 40,
-        speed: 300,
+        defaultSpeed: 300,
       },
-    }[enemyType]
-
-    data.color = {
-      r: 0.8,
-      g: 0.2,
-      b: 0.1,
-      alpha: 1.0,
-    };
+      enemyNormal: {
+        width: 40,
+        height: 40,
+        defaultSpeed: 300,
+      },
+    }[tankType]
 
     return data;
 }
@@ -488,9 +554,83 @@ function pickPlayerDirection(Game) {
   }
 }
 
-function bulletCreate(bulletSpeed: number, tank: Tank) {
+//NOTE(Fede) Asumes tank is effectively moving in its direction
+function tankEstimateNewPositionForMovement(tank: Tank, dt: number) : EntityPosition {
+  var dx = 0;
+  var dy = 0;
+  if(tank.direction === "right") {
+    dx += Math.floor(tank.speed * dt / 1000);
+  } else if(tank.direction === "left") {
+    dx -= Math.floor(tank.speed * dt / 1000);
+  } else if(tank.direction === "up") {
+    dy -= Math.floor(tank.speed * dt / 1000);
+  } else if(tank.direction === "down") {
+    dy += Math.floor(tank.speed * dt / 1000);
+  }
+
+  return {
+    x: tank.position.x + dx,
+    y: tank.position.y + dy,
+  };
+}
+
+function tankPositionForBoundaryCollision(
+    tank: Tank,
+    estimatedPosition: EntityPosition,
+    tileBoundaries: RectangleBoundaries): EntityPosition {
+
+  var newPlayerPosition = JSON.parse(JSON.stringify(estimatedPosition));
+  var tankData = tankGetData(tank.tankType);
+  var tankBoundaries = getRectangleBoundaries(tank.position, tankData.width, tankData.height);
+
+  switch(tank.direction) {
+    case "up":
+      if(tileBoundaries.bottom >= tankBoundaries.top) {
+        newPlayerPosition.y = Math.round(tileBoundaries.bottom + tankData.height / 2);
+      }
+      break;
+    case "down":
+      if(tileBoundaries.top <= tankBoundaries.bottom) {
+        newPlayerPosition.y = Math.round(tileBoundaries.top - tankData.height / 2);
+      }
+      break;
+    case "left":
+      if(tileBoundaries.right >= tankBoundaries.left) {
+        newPlayerPosition.x = Math.round(tileBoundaries.right + tankData.width / 2);
+      }
+      break;
+    case "right":
+      if(tileBoundaries.left <= tankBoundaries.right) {
+        newPlayerPosition.x = Math.round(tileBoundaries.left - tankData.width / 2);
+      }
+      break;
+  }
+
+  /*
+  if(tank.direction === "up" || tank.direction === "down") {
+    if(tank.position.y > tileBoundaries.bottom) {
+      newPlayerPosition.y = Math.round(tileBoundaries.bottom + tankData.height / 2);
+    } else {
+      newPlayerPosition.y = Math.round(tileBoundaries.top - tankData.height / 2);
+    }
+  }
+
+  if(tank.direction === "left" || tank.direction === "right") {
+    if(tank.position.x < tileBoundaries.left) {
+      newPlayerPosition.x = Math.round(tileBoundaries.left - tankData.width / 2);
+    } else {
+      newPlayerPosition.x = Math.round(tileBoundaries.right + tankData.width / 2);
+    }
+  }
+   */
+
+  return newPlayerPosition;
+}
+
+function bulletCreate(tank: Tank) {
     var vx = 0;
     var vy = 0;
+    var bulletSpeed = tank.bulletSpeed;
 
     switch(tank.direction) {
       case "up": {
@@ -568,11 +708,6 @@ type RectangleBoundaries = {
 function rectangleBoundariesAreColliding(a: RectangleBoundaries, b: RectangleBoundaries)
 : boolean
 {
-  var below = a.top >= b.bottom;
-  var above = a.bottom <= b.top;
-  var left = a.right <= b.left;
-  var right = a.left >= b.right;
-
   return !(a.top >= b.bottom || a.bottom <= b.top || a.right <= b.left || a.left >= b.right);
 }
 
@@ -585,7 +720,6 @@ function getRectangleBoundaries(position: EntityPosition, width: number, height:
     
   };
 };
-
 // DRAW UTILS
 // NOTE(Fede): Tile map is an array of 24 arrays (rows) of 32 tiles
 // Returns the corresponding tile entities
@@ -650,7 +784,10 @@ function drawRectangle(gl, glLocations, color: Color, width, height, x, y)
     gl.drawArrays(primitiveType, offset, count);
 }
 
-function tankDraw(gl, glLocations, tank) {
+function tankDraw(gl, glLocations, color, tank) {
+    console.log(tank);
+    console.log(tank.position);
+    var tankData = tankGetData(tank.tankType);
     // Rotation angle
     var theta = 0;
     switch(tank.direction) {
@@ -667,7 +804,7 @@ function tankDraw(gl, glLocations, tank) {
 
     // Set matices
     var matrixProjection = mat3.projection(gl.canvas.width, gl.canvas.height);
-    var matrixChangeOrigin = mat3.translation(-tank.width / 2, -tank.height / 2);
+    var matrixChangeOrigin = mat3.translation(-tankData.width / 2, -tankData.height / 2);
     var matrixRotation = mat3.rotation(theta)
     var matrixTranslation = mat3.translation(tank.position.x, tank.position.y);
     var matrix = mat3.identity()
@@ -678,13 +815,13 @@ function tankDraw(gl, glLocations, tank) {
     gl.uniformMatrix3fv(glLocations.uMatrix, false, matrix);
 
     // Add vertices to array buffer (Requires a buffer to been previously bound to gl.ARRAY_BUFFER)
-    var bodyVertices = squareVertices(tank.width, tank.height * 3 / 4, 0, tank.height * 1 / 4);
-    var cannonVertices = squareVertices(tank.width / 4, tank.height, tank.width * 3 / 8, 0);
+    var bodyVertices = squareVertices(tankData.width, tankData.height * 3 / 4, 0, tankData.height * 1 / 4);
+    var cannonVertices = squareVertices(tankData.width / 4, tankData.height, tankData.width * 3 / 8, 0);
     var tankVertices = bodyVertices.concat(cannonVertices)
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(tankVertices), gl.STATIC_DRAW);
 
     // Define and set color for rectangle
-    var colorArray = [tank.color.r, tank.color.g, tank.color.b, tank.color.alpha]
+    var colorArray = [color.r, color.g, color.b, color.alpha]
     gl.uniform4fv(glLocations.uColor, colorArray);
 
     var primitiveType = gl.TRIANGLES;
