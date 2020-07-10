@@ -27,5 +27,5 @@ echo .html Files copied successfully
 
 # Get js file
 echo Compiling .ts files...
-tsc src/index.ts --outFile build/index.js
+tsc src/index.ts --outFile build/index.js --lib dom,es2015
 echo .ts Files compiled successfully

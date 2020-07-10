@@ -6,14 +6,14 @@ type Color = {
   alpha: number,
 }
 
-type EntityPosition = {
+type Vector2 = {
   x: number,
   y: number,
 }
 
 type Tank = {
   tankType: string,
-  position: EntityPosition,
+  position: Vector2,
   direction: string,
   speed: number,
   bullet: Bullet,
@@ -25,7 +25,8 @@ type Bullet = {
   vy: number,
   width: number,
   height: number,
-  position: EntityPosition, 
+  position: Vector2, 
+  collided: boolean,
 }
 
 window.onload = run; 
@@ -130,6 +131,10 @@ function run() {
     // Level
     levelWidth: gl.canvas.width,
     levelHeight: gl.canvas.height,
+    tileWidth: 20,
+    tileHeight: 20,
+    tileRows: tileMap.length,
+    tileCols: tileMap[0].length,
 
     // Input
     arrowDownIsPressed: false,
@@ -152,7 +157,7 @@ function run() {
       tankType: 'playerNormal',
       position: { x: 40, y: 40 },
       direction: "up",
-      speed: 300,
+      speed: 200,
       bullet: null,
       bulletSpeed: 800,
     },
@@ -216,7 +221,7 @@ function run() {
       b: 1,
       alpha: 1.0,
     },
-    tiles: parseTileMap(tileMap), 
+    tiles: tileMap, 
   }
 
   // EVENT LISTENERS
@@ -307,106 +312,32 @@ function run() {
       }
     }
 
-    var newPlayerPosition = Game.playerTank.position;
     if(isMoving) {
-      newPlayerPosition = tankEstimateNewPositionForMovement(Game.playerTank, dt);
+      var playerMovement =
+        tankComputeMovementInDirection(Game, Game.playerTank, dt)
+      Game.playerTank.position = playerMovement.newPosition;
     }
-
-    // collision with screen limits
-    var playerTankData = tankGetData(Game.playerTank.tankType);
-    newPlayerPosition.x = 
-      capToBoundaries(newPlayerPosition.x, playerTankData.width / 2, Game.levelWidth - playerTankData.width / 2)
-    newPlayerPosition.y =
-      capToBoundaries(newPlayerPosition.y, playerTankData.height / 2, Game.levelHeight - playerTankData.height / 2)
-    
-    // player collision with tiles
-    var playerBoundaries = getRectangleBoundaries(newPlayerPosition, playerTankData.width, playerTankData.height);
-
-    for(var i = 0; i < Game.tiles.length; i++) {
-      var tile = Game.tiles[i];
-
-      if(tile.tileType === 'g') {
-        continue;
-      }
-
-      var tileBoundaries = getRectangleBoundaries(tile.position, tile.width, tile.height);
-      var collission = rectangleBoundariesAreColliding(playerBoundaries, tileBoundaries);
-      if(collission) {
-        newPlayerPosition = tankPositionForBoundaryCollision(Game.playerTank, newPlayerPosition, tileBoundaries)
-      }
-    }
-
-    Game.playerTank.position = newPlayerPosition;
 
     // Update enemies position
     Game.enemies.forEach(function(enemy) {
       if(enemy.nextDirection) {
         enemy.tank.direction = enemy.nextDirection;
         enemy.nextDirection = null;
-      }
-      var newEstimatePosition = tankEstimateNewPositionForMovement(enemy.tank, dt);
-      var tankData = tankGetData(enemy.tank.tankType);
-      var shouldPickNewDirection = false;
-      // collision with screen limits
-      var newPosition = {x: newEstimatePosition.x, y: newEstimatePosition.y};
-      newPosition.x = 
-        capToBoundaries(newPosition.x, tankData.width / 2, Game.levelWidth - tankData.width / 2)
-      newPosition.y =
-        capToBoundaries(newPosition.y, tankData.height / 2, Game.levelHeight - tankData.height / 2)
+      } else {
 
-      if((newPosition.x !== newEstimatePosition.x) || (newPosition.y !== newEstimatePosition.y)) {
-        var newIndex = Math.floor(Math.random() * 4);
-        shouldPickNewDirection = true;
-      }
+        var enemyMovement = tankComputeMovementInDirection(Game, enemy.tank, dt);
+        enemy.tank.position = enemyMovement.newPosition;
 
-      // enemy collision with tiles
-      var enemyBoundaries = getRectangleBoundaries(newPosition, tankData.width, tankData.height);
-
-      for(var i = 0; i < Game.tiles.length; i++) {
-        var tile = Game.tiles[i];
-
-        if(tile.tileType === 'g') {
-          continue;
+        if(enemyMovement.collisions.length > 0) {
+          var newIndex = Math.floor(Math.random() * 4);
+          enemy.nextDirection = ['up', 'down', 'right', 'left'][newIndex];
         }
-
-        var tileBoundaries = getRectangleBoundaries(tile.position, tile.width, tile.height);
-        var collision = rectangleBoundariesAreColliding(enemyBoundaries, tileBoundaries);
-        if(collision) {
-          var isCollidingInDirection
-          switch(enemy.tank.direction) {
-            case "up":
-              isCollidingInDirection = enemyBoundaries.top <= enemyBoundaries.bottom;
-              break;
-            case "down":
-              isCollidingInDirection = enemyBoundaries.bottom >= enemyBoundaries.top;
-              break;
-            case "right":
-              isCollidingInDirection = enemyBoundaries.right >= enemyBoundaries.left;
-              break;
-            case "left":
-              isCollidingInDirection = enemyBoundaries.left <= enemyBoundaries.left;
-              break;
-          }
-          if(isCollidingInDirection) {
-            //newPosition = tankPositionForBoundaryCollision(enemy.tank, newPosition, tileBoundaries)
-            newPosition = enemy.tank.position;
-            
-            // pick a new direction at random
-            shouldPickNewDirection = true;
-            break;
-          }
-        }
-      }
-      enemy.tank.position = newPosition;
-
-      if(shouldPickNewDirection) {
-        var newIndex = Math.floor(Math.random() * 4);
-        enemy.nextDirection = ['up', 'down', 'right', 'left'][newIndex];
       }
     })
 
     // Update player bullet position
     if(Game.playerTank.bullet) {
+      //TODO(Redo this so it does the same checks as the tank)
       bulletUpdate(Game.playerTank, Game, dt);
     }
 
@@ -433,7 +364,6 @@ function run() {
         }
       }
     })
-
 
     // Draw Player
     tankDraw(
@@ -482,17 +412,22 @@ function run() {
       },
     };
 
-    Game.tiles.forEach(function(tile) {
-      drawRectangle(
-        gl,
-        glLocations,
-        tileColors[tile.tileType],
-        tile.width,
-        tile.height,
-        tile.position.x,
-        tile.position.y
-      );
-    })
+    for(var i = 0; i < Game.tileRows; i++) {
+      for(var j = 0; j < Game.tileCols; j++) {
+        var tile = Game.tiles[i][j];
+        if(tile !== 'x') {
+          drawRectangle(
+            gl,
+            glLocations,
+            tileColors[tile],
+            Game.tileWidth,
+            Game.tileHeight,
+            Math.floor(j * Game.tileWidth + Game.tileWidth / 2),
+            Math.floor(i * Game.tileHeight + Game.tileHeight / 2),
+          );
+        }
+      }
+    }
 
     // DrawBullets
     if(Game.playerTank.bullet) {
@@ -520,8 +455,9 @@ function run() {
 }
 
 // ENTITY DATA
+
+// Tank
 function tankGetData(tankType) {
-    console.log(tankType);
     var data =  {
       playerNormal: {
         width: 40,
@@ -555,7 +491,7 @@ function pickPlayerDirection(Game) {
 }
 
 //NOTE(Fede) Asumes tank is effectively moving in its direction
-function tankEstimateNewPositionForMovement(tank: Tank, dt: number) : EntityPosition {
+function tankEstimateMovement(tank: Tank, dt: number) : Vector2 {
   var dx = 0;
   var dy = 0;
   if(tank.direction === "right") {
@@ -569,62 +505,51 @@ function tankEstimateNewPositionForMovement(tank: Tank, dt: number) : EntityPosi
   }
 
   return {
-    x: tank.position.x + dx,
-    y: tank.position.y + dy,
+    x: dx,
+    y: dy,
   };
 }
 
-function tankPositionForBoundaryCollision(
-    tank: Tank,
-    estimatedPosition: EntityPosition,
-    tileBoundaries: RectangleBoundaries): EntityPosition {
-
-  var newPlayerPosition = JSON.parse(JSON.stringify(estimatedPosition));
+function tankComputeMovementInDirection(Game, tank: Tank, dt: number) {
   var tankData = tankGetData(tank.tankType);
-  var tankBoundaries = getRectangleBoundaries(tank.position, tankData.width, tankData.height);
+  var collisions = [];
+  var movementEstimate = tankEstimateMovement(tank, dt);
 
-  switch(tank.direction) {
-    case "up":
-      if(tileBoundaries.bottom >= tankBoundaries.top) {
-        newPlayerPosition.y = Math.round(tileBoundaries.bottom + tankData.height / 2);
-      }
-      break;
-    case "down":
-      if(tileBoundaries.top <= tankBoundaries.bottom) {
-        newPlayerPosition.y = Math.round(tileBoundaries.top - tankData.height / 2);
-      }
-      break;
-    case "left":
-      if(tileBoundaries.right >= tankBoundaries.left) {
-        newPlayerPosition.x = Math.round(tileBoundaries.right + tankData.width / 2);
-      }
-      break;
-    case "right":
-      if(tileBoundaries.left <= tankBoundaries.right) {
-        newPlayerPosition.x = Math.round(tileBoundaries.left - tankData.width / 2);
-      }
-      break;
+  var newPosition = 
+    {
+      x: tank.position.x + movementEstimate.x,
+      y: tank.position.y + movementEstimate.y,
+    };
+
+  var isVertical = tank.direction === "up" || tank.direction === "down";
+  var relativeWidth = isVertical? tankData.width : tankData.height;
+  var relativeHeight = isVertical ? tankData.height : tankData.width;
+
+  var boundaries =
+    getRectangleBoundaries(
+      newPosition,
+      relativeWidth,
+      relativeHeight
+    );
+
+  var screenLimitsCollisions = 
+    rectangleBoundariesCollisionsScreenLimits(
+      Game, boundaries, newPosition, relativeWidth, relativeHeight);
+  boundaries = screenLimitsCollisions.boundaries;
+  newPosition = screenLimitsCollisions.position;
+  collisions = collisions.concat(screenLimitsCollisions.collisions);
+
+  var tileCollisions = 
+    rectangleBoundariesCollisionsTiles(
+      Game, boundaries, newPosition, movementEstimate, relativeWidth, relativeHeight, ["b", "s", "w"]);
+  boundaries = tileCollisions.boundaries;
+  newPosition = tileCollisions.position;
+  collisions = collisions.concat(tileCollisions.collisions);
+
+  return {
+    newPosition: newPosition,
+    collisions: collisions,
   }
-
-  /*
-  if(tank.direction === "up" || tank.direction === "down") {
-    if(tank.position.y > tileBoundaries.bottom) {
-      newPlayerPosition.y = Math.round(tileBoundaries.bottom + tankData.height / 2);
-    } else {
-      newPlayerPosition.y = Math.round(tileBoundaries.top - tankData.height / 2);
-    }
-  }
-
-  if(tank.direction === "left" || tank.direction === "right") {
-    if(tank.position.x < tileBoundaries.left) {
-      newPlayerPosition.x = Math.round(tileBoundaries.left - tankData.width / 2);
-    } else {
-      newPlayerPosition.x = Math.round(tileBoundaries.right + tankData.width / 2);
-    }
-  }
-   */
-
-  return newPlayerPosition;
 }
 
 function bulletCreate(tank: Tank) {
@@ -656,46 +581,68 @@ function bulletCreate(tank: Tank) {
         x: tank.position.x,
         y: tank.position.y,
       },
+      collided: false,
     };
 }
 
 function bulletUpdate(tank: Tank, Game, dt) {
-    var bullet = tank.bullet;
-    if(!bullet) { 
-      return;
-    }
-    bullet.position.x += Math.round(bullet.vx * dt / 1000);
-    bullet.position.y += Math.round(bullet.vy * dt / 1000);
+  var bullet = tank.bullet;
+  if(!bullet) { 
+    return;
+  }
+  if(bullet.collided) {
+    tank.bullet = null;
+    return;
+  }
+  var movementEstimate = {
+    x: Math.round(bullet.vx * dt / 1000),
+    y: Math.round(bullet.vy * dt / 1000),
+  }
+  var newPosition = {
+    x: Math.round(bullet.position.x + movementEstimate.x),
+    y: Math.round(bullet.position.y + movementEstimate.y),
+  }
+  var collisions = [];
+  var relativeWidth;
+  var relativeHeight;
+  if(bullet.vy > 0) {
+    relativeWidth = bullet.width;
+    relativeHeight = bullet.height;
+  } else {
+    relativeWidth = bullet.height;
+    relativeHeight = bullet.width;
+  }
 
-    var bulletBoundaries = getRectangleBoundaries(bullet.position, bullet.width, bullet.height);
+  var boundaries = getRectangleBoundaries(newPosition, relativeWidth, relativeHeight);
 
-    // bullet collision with tiles
-    var collision = false;
-    for(var j = 0; j < Game.tiles.length; j++) {
-      var tile = Game.tiles[j];
-      if(tile.tileType === 'g' || tile.tileType === 'w') {
-        continue;
-      }
-      var tileBoundaries = getRectangleBoundaries(tile.position, tile.width, tile.height);
-      var collidedWithTile = rectangleBoundariesAreColliding(bulletBoundaries, tileBoundaries);
-      if(collidedWithTile) {
-        collision = true;
-        if(tile.tileType == "b") {
-          Game.tiles.splice(j, 1);
-          j--;
-        }
-      }
-    }
+  console.log(boundaries);
+  var screenLimitsCollisions = 
+    rectangleBoundariesCollisionsScreenLimits(
+      Game, boundaries, newPosition, relativeWidth, relativeHeight);
+  boundaries = screenLimitsCollisions.boundaries;
+  newPosition = screenLimitsCollisions.position;
+  collisions = collisions.concat(screenLimitsCollisions.collisions);
+  console.log(screenLimitsCollisions);
 
-    // bullet collsion with boundaries
-    if(bullet.position.x < 0 || bullet.position.x > Game.levelWidth || bullet.position.y < 0 || bullet.position.y > Game.levelHeight) {
-      collision = true;
-    }
+  var tileCollisions = 
+    rectangleBoundariesCollisionsTiles(
+      Game, boundaries, newPosition, movementEstimate, relativeWidth, relativeHeight, ["b", "s"]);
+  boundaries = tileCollisions.boundaries;
+  newPosition = tileCollisions.position;
+  collisions = collisions.concat(tileCollisions.collisions);
 
-    if(collision) {
-      // Remove Bullet
-      tank.bullet = null;
+  // Destroy tiles
+  tileCollisions.collisions.forEach(function(tileCollision) {
+    if(tileCollision.metadata.tile === "b") {
+      Game.tiles[tileCollision.metadata.row][tileCollision.metadata.col] = 'x';
     }
+  })
+
+  bullet.position = newPosition;
+  if(collisions.length > 0) {
+    // Remove Bullet
+    tank.bullet.collided = true;
+  }
 }
 
 type RectangleBoundaries = {
@@ -711,38 +658,157 @@ function rectangleBoundariesAreColliding(a: RectangleBoundaries, b: RectangleBou
   return !(a.top >= b.bottom || a.bottom <= b.top || a.right <= b.left || a.left >= b.right);
 }
 
-function getRectangleBoundaries(position: EntityPosition, width: number, height: number) : RectangleBoundaries {
+// NOTE(Fede): width and height are relative to the x and y axis.
+function getRectangleBoundaries(position: Vector2, width: number, height: number) : RectangleBoundaries {
   return {
     top: position.y - height / 2,
     bottom: position.y + height / 2,
     right: position.x + width / 2,
     left: position.x - width / 2,
-    
   };
 };
-// DRAW UTILS
-// NOTE(Fede): Tile map is an array of 24 arrays (rows) of 32 tiles
-// Returns the corresponding tile entities
-function parseTileMap(tileMap) {
-  let tiles = [];
-  for(var i = 0; i < 24; i++) {
-    for(var j = 0; j < 32; j++) {
-      if(tileMap[i][j] !== 'x') {
 
-        tiles.push({
-          position: {
-            x: 10 + 20 * j, 
-            y: 10 + 20 * i,
-          },
-          tileType: tileMap[i][j],
-          width: 20,
-          height: 20
-        });
+function rectangleBoundariesCollisionsScreenLimits(Game, boundaries: RectangleBoundaries, position: Vector2, width, height) {
+  var minX = Math.round(width / 2);
+  var maxX = Math.round(Game.levelWidth - width / 2);
+  var minY = Math.round(height / 2);
+  var maxY = Math.round(Game.levelHeight - height / 2);
+  var newPosition = {x: position.x, y: position.y};
+  var collisions = [];
+
+  if(newPosition.x < minX) {
+    newPosition.x = minX;
+    collisions.push({entity: 'screenLimit'});
+  }
+  if(newPosition.x > maxX) {
+    newPosition.x = maxX;
+    collisions.push({entity: 'screenLimit'});
+  }
+  if(newPosition.y < minY) {
+    newPosition.y = minY;
+    collisions.push({entity: 'screenLimit'});
+  }
+  if(newPosition.y > maxY) {
+    newPosition.y = maxY;
+    collisions.push({entity: 'screenLimit'});
+  }
+
+  var newBoundaries =
+    getRectangleBoundaries(
+      newPosition,
+      width,
+      height
+    );
+  
+  return {
+    boundaries: newBoundaries,
+    position: newPosition,
+    collisions: collisions,
+  }
+}
+
+function rectangleBoundariesCollisionsTiles(Game, boundaries: RectangleBoundaries, position: Vector2, movement: Vector2, width, height, targetTiles: string[]) {
+  var collisions = [];
+  var newPosition = {x: position.x, y: position.y};
+
+  var isTargetTile = function(tile) { return targetTiles.indexOf(tile) !== -1 }
+
+  // check collision to the right
+  if(movement.x > 0) {
+    var col = Math.min(Math.floor((boundaries.right) / Game.tileWidth), Game.tileCols - 1);
+    var topRow = Math.floor((boundaries.top + 1) / Game.tileHeight);
+    var centerRow = Math.floor(newPosition.y / Game.tileHeight);
+    var bottomRow = Math.floor((boundaries.bottom - 1) / Game.tileHeight);
+
+    var collided = false;
+    arrayUnique([topRow, centerRow, bottomRow]).forEach(function(row) {
+      var tile = Game.tiles[row][col];
+      if(isTargetTile(tile)) {
+        collided = true;
+        collisions.push({entity: 'tile', metadata: {tile: tile, col: col, row: row}})
       }
+    });
+
+    if(collided) {
+      newPosition.x = Math.round((col) * Game.tileWidth - width / 2);
     }
   }
-  return tiles;
+
+  // check collision to the left
+  if(movement.x < 0) {
+    var col = Math.floor(boundaries.left / Game.tileWidth);
+    var topRow = Math.floor((boundaries.top + 1) / Game.tileHeight);
+    var centerRow = Math.floor(newPosition.y / Game.tileHeight);
+    var bottomRow = Math.floor((boundaries.bottom - 1) / Game.tileHeight);
+
+    var collided = false;
+    arrayUnique([topRow, centerRow, bottomRow]).forEach(function(row) {
+      var tile = Game.tiles[row][col];
+      if(isTargetTile(tile)) {
+        collided = true;
+        collisions.push({entity: 'tile', metadata: {tile: tile, col: col, row: row}})
+      }
+    });
+
+    if(collided) {
+      newPosition.x = Math.round((col + 1) * Game.tileWidth + width / 2);
+    }
+  }
+
+  // check collision going down 
+  if(movement.y > 0) {
+    var row = Math.min(Math.floor(boundaries.bottom / Game.tileHeight), Game.tileRows - 1);
+    var leftCol = Math.floor((boundaries.left + 1) / Game.tileWidth);
+    var centerCol = Math.floor(newPosition.x / Game.tileWidth);
+    var rightCol = Math.floor((boundaries.right - 1) / Game.tileWidth);
+
+    var collided = false;
+    arrayUnique([leftCol, centerCol, rightCol]).forEach(function(col) {
+      var tile = Game.tiles[row][col];
+      if(isTargetTile(tile)) {
+        collided = true;
+        collisions.push({entity: 'tile', metadata: {tile: tile, col: col, row: row}})
+      }
+    });
+
+    if(collided) {
+      newPosition.y = Math.round((row) * Game.tileHeight - height / 2);
+    }
+  }
+
+  // check collision going up 
+  if(movement.y < 0) {
+    var row = Math.floor(boundaries.top / Game.tileHeight);
+    var leftCol = Math.floor((boundaries.left + 1) / Game.tileWidth);
+    var centerCol = Math.floor(newPosition.x / Game.tileWidth);
+    var rightCol = Math.floor((boundaries.right - 1) / Game.tileWidth);
+
+    var collided = false;
+    arrayUnique([leftCol, centerCol, rightCol]).forEach(function(col) {
+      var tile = Game.tiles[row][col];
+      if(isTargetTile(tile)) {
+        collided = true;
+        collisions.push({entity: 'tile', metadata: {tile: tile, col: col, row: row}})
+      }
+    });
+
+    if(collided){
+      newPosition.y = Math.round((row + 1) * Game.tileHeight + height / 2);
+    }
+  }
+
+  var newBoundaries = getRectangleBoundaries(newPosition, width, height);
+
+  var result =  {
+    boundaries: newBoundaries,
+    position: newPosition,
+    collisions: collisions,
+  }
+
+  return result;
 }
+
+// DRAW UTILS
 
 //NOTE(Fede): x and y mean the top left of the rectangle here, contrary to what is used
 // to position entities. Then this rectangle is translated using a translation
@@ -785,8 +851,6 @@ function drawRectangle(gl, glLocations, color: Color, width, height, x, y)
 }
 
 function tankDraw(gl, glLocations, color, tank) {
-    console.log(tank);
-    console.log(tank.position);
     var tankData = tankGetData(tank.tankType);
     // Rotation angle
     var theta = 0;
@@ -965,4 +1029,16 @@ var mat3 = {
 // MISC UTILS
 function capToBoundaries(val, min, max) {
 	return Math.min(max, Math.max(val, min));
+}
+
+function arrayUnique(array: any[]): any[] {
+  var result = []
+
+  array.forEach(function(elem) {
+    if(result.indexOf(elem) === -1) {
+      result.push(elem);
+    }
+  })
+
+  return result;
 }
