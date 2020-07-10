@@ -18,6 +18,9 @@ type Tank = {
   speed: number,
   bullet: Bullet,
   bulletSpeed: number,
+  player: boolean,
+  wasDestroyed: boolean,
+  id: number,
 }
 
 type Bullet = {
@@ -64,6 +67,7 @@ function run() {
     [ 'b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','s','s','x'],
     [ 'b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','s','s','x']
   ]
+
 
   if(gl === null) {
     alert("Unable to initialize WebGL. Your browser or machine may not support it.");
@@ -122,6 +126,16 @@ function run() {
   gl.vertexAttribPointer(glLocations.aPosition, size, dataType, normalize, stride, offset);
 
 
+  // Ids for entities
+  var entityIds = {
+    current: 0,
+    create: function(): number {
+      var prev = this.current;
+      this.current++;
+      return prev;
+    },
+  }
+
   // GAME SETUP
   var Game = {
     // Runtime
@@ -146,6 +160,8 @@ function run() {
     spaceIsPressed: false,
     spaceWasPressed: false,
 
+    entityIds: entityIds,
+
     // Player
     playerColor: {
       r: 0.1,
@@ -160,6 +176,9 @@ function run() {
       speed: 200,
       bullet: null,
       bulletSpeed: 800,
+      player: true,
+      wasDestroyed: false,
+      id: entityIds.create(),
     },
 
     // Enemies
@@ -181,6 +200,9 @@ function run() {
           speed: 200,
           bullet: null,
           bulletSpeed: 800,
+          player: false,
+          wasDestroyed: false,
+          id: entityIds.create()
         },
         nextDirection: null,
       },
@@ -195,6 +217,9 @@ function run() {
           speed: 200,
           bullet: null,
           bulletSpeed: 800,
+          player: false,
+          wasDestroyed: false,
+          id: entityIds.create(),
         },
         nextDirection: null,
       },
@@ -209,6 +234,9 @@ function run() {
           speed: 200,
           bullet: null,
           bulletSpeed: 800,
+          player: false,
+          wasDestroyed: false,
+          id: entityIds.create(),
         },
         nextDirection: null,
       }
@@ -615,14 +643,12 @@ function bulletUpdate(tank: Tank, Game, dt) {
 
   var boundaries = getRectangleBoundaries(newPosition, relativeWidth, relativeHeight);
 
-  console.log(boundaries);
   var screenLimitsCollisions = 
     rectangleBoundariesCollisionsScreenLimits(
       Game, boundaries, newPosition, relativeWidth, relativeHeight);
   boundaries = screenLimitsCollisions.boundaries;
   newPosition = screenLimitsCollisions.position;
   collisions = collisions.concat(screenLimitsCollisions.collisions);
-  console.log(screenLimitsCollisions);
 
   var tileCollisions = 
     rectangleBoundariesCollisionsTiles(
