@@ -308,14 +308,13 @@ function run() {
 
   // Define main loop
   function main(tFrame) {
-    /*
-     * DRAW
-     */
     // Clear the canvas
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    // Update 
+    /*
+     * UPDATE 
+     */
     var dt = tFrame - Game.tLastRender;
     var isMoving = false;
 
@@ -347,25 +346,31 @@ function run() {
     }
 
     // Update enemies position
-    Game.enemies.forEach(function(enemy) {
+    for(var i = 0; i < Game.enemies.length; i++) {
+      var enemy = Game.enemies[i];
+      if(enemy.tank.wasDestroyed) {
+        Game.enemies.splice(i, 1);
+        i--;
+        break;
+      }
+
       if(enemy.nextDirection) {
         enemy.tank.direction = enemy.nextDirection;
         enemy.nextDirection = null;
-      } else {
-
-        var enemyMovement = tankComputeMovementInDirection(Game, enemy.tank, dt);
-        enemy.tank.position = enemyMovement.newPosition;
-
-        if(enemyMovement.collisions.length > 0) {
-          var newIndex = Math.floor(Math.random() * 4);
-          enemy.nextDirection = ['up', 'down', 'right', 'left'][newIndex];
-        }
+        break;
       }
-    })
+
+      var enemyMovement = tankComputeMovementInDirection(Game, enemy.tank, dt);
+      enemy.tank.position = enemyMovement.newPosition;
+
+      if(enemyMovement.collisions.length > 0) {
+        var newIndex = Math.floor(Math.random() * 4);
+        enemy.nextDirection = ['up', 'down', 'right', 'left'][newIndex];
+      }
+    }
 
     // Update player bullet position
     if(Game.playerTank.bullet) {
-      //TODO(Redo this so it does the same checks as the tank)
       bulletUpdate(Game.playerTank, Game, dt);
     }
 
@@ -663,6 +668,30 @@ function bulletUpdate(tank: Tank, Game, dt) {
       Game.tiles[tileCollision.metadata.row][tileCollision.metadata.col] = 'x';
     }
   })
+
+  if(tank.player) {
+    Game.enemies.forEach(function(enemy) {
+      var tankData = tankGetData(enemy.tank.tankType);
+      console.log(enemy.tank);
+      console.log(tankData);
+      var relativeWidth;
+      var relativeHeight;
+      if(enemy.tank.direction === "up" || enemy.tank.direction === "down") {
+        relativeWidth = tankData.width;
+        relativeHeight = tankData.height;
+      } else {
+        relativeWidth = tankData.height;
+        relativeHeight = tankData.width;
+      }
+      if(rectangleBoundariesAreColliding(
+        boundaries,
+        getRectangleBoundaries(enemy.tank.position, relativeWidth, relativeHeight))
+      ) {
+        enemy.tank.wasDestroyed = true;
+        collisions.push({entity: "tank"})
+      }
+    })
+  }
 
   bullet.position = newPosition;
   if(collisions.length > 0) {
