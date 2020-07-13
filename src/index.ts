@@ -125,8 +125,7 @@ function run() {
 
   gl.vertexAttribPointer(glLocations.aPosition, size, dataType, normalize, stride, offset);
 
-
-  // Ids for entities
+// Ids for entities
   var entityIds = {
     current: 0,
     create: function(): number {
@@ -134,6 +133,11 @@ function run() {
       this.current++;
       return prev;
     },
+  }
+
+  var playerSpawnPosition =  {
+    x: 200,
+    y: 440, 
   }
 
   // GAME SETUP
@@ -163,6 +167,8 @@ function run() {
     entityIds: entityIds,
 
     // Player
+    playerLives: 3,
+    playerSpawnPosition: playerSpawnPosition,
     playerColor: {
       r: 0.1,
       g: 0.8,
@@ -171,7 +177,7 @@ function run() {
     },
     playerTank: {
       tankType: 'playerNormal',
-      position: { x: 40, y: 40 },
+      position: { x: playerSpawnPosition.x, y: playerSpawnPosition.y },
       direction: "up",
       speed: 200,
       bullet: null,
@@ -316,33 +322,45 @@ function run() {
      * UPDATE 
      */
     var dt = tFrame - Game.tLastRender;
-    var isMoving = false;
 
-    // Check Player direction and movement
-    if(Game.lastDirectionPressed) {
-      var pressedDirections = [];
-      if(Game.arrowUpIsPressed) { pressedDirections.push("up") };
-      if(Game.arrowDownIsPressed) { pressedDirections.push("down") };
-      if(Game.arrowLeftIsPressed) { pressedDirections.push("left") };
-      if(Game.arrowRightIsPressed) { pressedDirections.push("right") };
-
-      if(pressedDirections.length > 0) {
-        isMoving = true;
-        if(pressedDirections.indexOf(Game.lastDirectionPressed) !== -1) {
-          Game.playerTank.direction = Game.lastDirectionPressed;
-        } else {
-          // Pick one of the pressed directions
-          Game.playerTank.direction = pressedDirections.pop();
-        }
+    if(Game.playerTank.wasDestroyed) {
+      Game.playerLives--;
+      if(Game.playerLives >= 0) {
+        Game.playerTank.position = vec2.copy(Game.playerSpawnPosition); 
+        Game.playerTank.wasDestroyed = false;
       } else {
-        Game.playerTank.direction = Game.lastDirectionPressed;
+        alert("Game Over");
+        return;
       }
-    }
+    } else {
+      var isMoving = false;
 
-    if(isMoving) {
-      var playerMovement =
-        tankComputeMovementInDirection(Game, Game.playerTank, dt)
-      Game.playerTank.position = playerMovement.newPosition;
+      // Check Player direction and movement
+      if(Game.lastDirectionPressed) {
+        var pressedDirections = [];
+        if(Game.arrowUpIsPressed) { pressedDirections.push("up") };
+        if(Game.arrowDownIsPressed) { pressedDirections.push("down") };
+        if(Game.arrowLeftIsPressed) { pressedDirections.push("left") };
+        if(Game.arrowRightIsPressed) { pressedDirections.push("right") };
+
+        if(pressedDirections.length > 0) {
+          isMoving = true;
+          if(pressedDirections.indexOf(Game.lastDirectionPressed) !== -1) {
+            Game.playerTank.direction = Game.lastDirectionPressed;
+          } else {
+            // Pick one of the pressed directions
+            Game.playerTank.direction = pressedDirections.pop();
+          }
+        } else {
+          Game.playerTank.direction = Game.lastDirectionPressed;
+        }
+      }
+
+      if(isMoving) {
+        var playerMovement =
+          tankComputeMovementInDirection(Game, Game.playerTank, dt)
+        Game.playerTank.position = playerMovement.newPosition;
+      }
     }
 
     // Update enemies position
@@ -490,7 +508,7 @@ function run() {
 // ENTITY DATA
 
 // Tank
-function tankGetData(tankType) {
+function tankGetData(tankType: string) {
     var data =  {
       playerNormal: {
         width: 40,
@@ -555,7 +573,7 @@ function tankComputeMovementInDirection(Game, tank: Tank, dt: number) {
     };
 
   var isVertical = tank.direction === "up" || tank.direction === "down";
-  var relativeWidth = isVertical? tankData.width : tankData.height;
+  var relativeWidth = isVertical ? tankData.width : tankData.height;
   var relativeHeight = isVertical ? tankData.height : tankData.width;
 
   var boundaries =
@@ -672,8 +690,6 @@ function bulletUpdate(tank: Tank, Game, dt) {
   if(tank.player) {
     Game.enemies.forEach(function(enemy) {
       var tankData = tankGetData(enemy.tank.tankType);
-      console.log(enemy.tank);
-      console.log(tankData);
       var relativeWidth;
       var relativeHeight;
       if(enemy.tank.direction === "up" || enemy.tank.direction === "down") {
@@ -691,6 +707,25 @@ function bulletUpdate(tank: Tank, Game, dt) {
         collisions.push({entity: "tank"})
       }
     })
+  } else {
+    let tankData = tankGetData(Game.playerTank.tankType);
+    let relativeWidth;
+    let relativeHeight;
+    if(Game.playerTank.direction === "up" || Game.playerTank.direction === "down") {
+      relativeWidth = tankData.width;
+      relativeHeight = tankData.height;
+    } else {
+      relativeWidth = tankData.height;
+      relativeHeight = tankData.width;
+    }
+
+    if(rectangleBoundariesAreColliding(
+      boundaries,
+      getRectangleBoundaries(Game.playerTank.position, relativeWidth, relativeHeight))
+    ) {
+      Game.playerTank.wasDestroyed = true;
+      collisions.push({entity: "tank"})
+    }
   }
 
   bullet.position = newPosition;
@@ -1082,6 +1117,15 @@ var mat3 = {
 };
 
 // MISC UTILS
+var vec2 = {
+  copy: function(vec: Vector2) {
+    return {
+      x: vec.x,
+      y: vec.y,
+    }
+  }
+}
+
 function capToBoundaries(val, min, max) {
 	return Math.min(max, Math.max(val, min));
 }
