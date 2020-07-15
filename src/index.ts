@@ -53,19 +53,19 @@ function run() {
     [ 'b','b','x','x','b','b','x','x','b','b','x','x','b','b','x','x','x','x','x','x','x','b','b','b','b','b','b','b','b','b','b','b'],
     [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
     [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b'],
-    [ 'b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b'],
-    [ 'b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b'],
-    [ 'b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b'],
-    [ 'b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b'],
-    [ 'b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b'],
-    [ 'b','b','b','w','w','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b'],
-    [ 'b','b','b','w','w','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b'],
-    [ 'b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b'],
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','w','w','x'],
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','w','w','x'],
-    [ 'b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','s','s','x'],
-    [ 'b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','s','s','x']
+    [ 'b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','x','x','b','b','b','b','b','b','b','b','b'],
+    [ 'b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','x','x','b','b','b','b','b','b','b','b','b'],
+    [ 'b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','x','x','b','b','b','b','b','b','b','b','b'],
+    [ 'b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','x','x','b','b','b','b','b','b','b','b','b'],
+    [ 'b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','x','x','b','b','b','b','b','b','b','b','b'],
+    [ 'b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','x','x','b','b','b','b','b','b','b','b','b'],
+    [ 'b','b','b','w','w','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','x','x','b','b','b','b','b','b','b','b','b'],
+    [ 'b','b','b','w','w','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','x','x','b','b','b','b','b','b','b','b','b'],
+    [ 'b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','x','x','b','b','b','b','b','b','b','b','b'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','w','w'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','w','w'],
+    [ 'b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','s','s'],
+    [ 'b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','s','s']
   ]
 
 
@@ -596,6 +596,28 @@ function tankComputeMovementInDirection(Game, tank: Tank, dt: number) {
   boundaries = tileCollisions.boundaries;
   newPosition = tileCollisions.position;
   collisions = collisions.concat(tileCollisions.collisions);
+
+  // Tank Collisions
+  var enemyTanks = Game.enemies.map(e => e.tank);
+  var otherTanks = [Game.playerTank].concat(enemyTanks);
+  var tankCollisions = [];
+  otherTanks.forEach(function(otherTank) {
+    if(otherTank.id !== tank.id) {
+      var otherTankData = tankGetData(otherTank.tankType);
+      var otherTankBoundaries = 
+        getRectangleBoundaries(otherTank.position, otherTankData.width, otherTankData.height)
+
+      if(rectangleBoundariesAreColliding(boundaries, otherTankBoundaries)) {
+        tankCollisions.push({entity: 'tank', metadata: {boundaries: otherTankBoundaries}})
+      }
+    }
+  })
+
+  if(tankCollisions.length > 0) {
+    newPosition = vec2.copy(tank.position);
+  }
+  boundaries = getRectangleBoundaries(newPosition, relativeHeight, relativeWidth);
+  collisions = collisions.concat(tankCollisions);
 
   return {
     newPosition: newPosition,
