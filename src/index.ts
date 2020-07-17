@@ -1,4 +1,5 @@
-// TYPES
+// TYPES 
+
 type Color = {
   r: number,
   g: number,
@@ -20,7 +21,15 @@ type Tank = {
   bulletSpeed: number,
   player: boolean,
   wasDestroyed: boolean,
+  isSpawning: boolean,
   id: number,
+}
+
+type TankData = {
+  width: number,
+  height: number,
+  defaultSpeed: number,
+  bulletSpeed: number,
 }
 
 type Bullet = {
@@ -135,9 +144,16 @@ function run() {
     },
   }
 
-  var playerSpawnPosition =  {
-    x: 200,
-    y: 440, 
+  var levelConfig = {
+    playerSpawnPosition: {
+      x: 300,
+      y: 400,
+    },
+    enemySpawnPositions: [
+      { x: 20, y: 20},
+      { x: 100, y: 20},
+      { x: 200, y: 20},
+    ],
   }
 
   // GAME SETUP
@@ -168,7 +184,7 @@ function run() {
 
     // Player
     playerLives: 3,
-    playerSpawnPosition: playerSpawnPosition,
+    playerSpawnPosition: levelConfig.playerSpawnPosition,
     playerColor: {
       r: 0.1,
       g: 0.8,
@@ -177,75 +193,32 @@ function run() {
     },
     playerTank: {
       tankType: 'playerNormal',
-      position: { x: playerSpawnPosition.x, y: playerSpawnPosition.y },
+      position: null,
       direction: "up",
       speed: 200,
       bullet: null,
       bulletSpeed: 800,
       player: true,
       wasDestroyed: false,
+      isSpawning: true,
       id: entityIds.create(),
     },
 
     // Enemies
+    enemySpawnCountdown: 10 * time.seconds,
     enemyColor: {
       r: 0.8,
       g: 0.2,
       b: 0.1,
       alpha: 1.0,
     },
+    enemiesMax: 4,
     enemies: [
-      {
-        tank: {
-          tankType: 'enemyNormal',
-          position: {
-            x: 600,
-            y: 40,
-          },
-          direction: 'down',
-          speed: 200,
-          bullet: null,
-          bulletSpeed: 800,
-          player: false,
-          wasDestroyed: false,
-          id: entityIds.create()
-        },
-        nextDirection: null,
-      },
-      {
-        tank: {
-          tankType: 'enemyNormal',
-          position: {
-            x: 500,
-            y: 40,
-          },
-          direction: 'down',
-          speed: 200,
-          bullet: null,
-          bulletSpeed: 800,
-          player: false,
-          wasDestroyed: false,
-          id: entityIds.create(),
-        },
-        nextDirection: null,
-      },
-      {
-        tank: {
-          tankType: 'enemyNormal',
-          position: {
-            x: 400,
-            y: 40,
-          },
-          direction: 'down',
-          speed: 200,
-          bullet: null,
-          bulletSpeed: 800,
-          player: false,
-          wasDestroyed: false,
-          id: entityIds.create(),
-        },
-        nextDirection: null,
-      }
+    ],
+    nextEnemies: [
+      "enemyNormal",
+      "enemyNormal",
+      "enemyNormal"
     ],
 
     // Other Entities
@@ -326,12 +299,15 @@ function run() {
     if(Game.playerTank.wasDestroyed) {
       Game.playerLives--;
       if(Game.playerLives >= 0) {
-        Game.playerTank.position = vec2.copy(Game.playerSpawnPosition); 
+        Game.playerTank.isSpawning = true;
         Game.playerTank.wasDestroyed = false;
       } else {
         alert("Game Over");
         return;
       }
+    } else if(Game.playerTank.isSpawning) {
+      Game.playerTank.position = vec2.copy(Game.playerSpawnPosition); 
+      Game.playerTank.isSpawning = false;
     } else {
       var isMoving = false;
 
@@ -363,12 +339,47 @@ function run() {
       }
     }
 
+    // Spawn enemies
+    Game.enemySpawnCountdown -= dt;
+    if(Game.enemySpawnCountdown <= 0) {
+      Game.enemySpawnCountdown = 10 * time.seconds;
+      if(Game.nextEnemies.length > 0) {
+        let nextEnemyTank = Game.nextEnemies.pop();
+        let spawnPositions = levelConfig.enemySpawnPositions;
+        let newPositionIndex = Math.floor(spawnPositions.length * Math.random());
+        let newPosition = spawnPositions[newPositionIndex];
+        let tankData = tankGetData(nextEnemyTank);
+        let enemy = {
+          nextDirection: null,
+          tank: {
+            tankType: nextEnemyTank,
+            position: newPosition,
+            direction: pickRandomDirection(),
+            speed: tankData.defaultSpeed,
+            bullet: null,
+            bulletSpeed: tankData.bulletSpeed,
+            player: false,
+            wasDestroyed: false,
+            isSpawning: true,
+            id: entityIds.create(),
+          }
+        }
+
+        Game.enemies.push(enemy);
+      }
+    }
+
     // Update enemies position
     for(var i = 0; i < Game.enemies.length; i++) {
       var enemy = Game.enemies[i];
       if(enemy.tank.wasDestroyed) {
         Game.enemies.splice(i, 1);
         i--;
+        break;
+      }
+
+      if(enemy.tank.isSpawning) {
+        enemy.tank.isSpawning = false;
         break;
       }
 
@@ -400,7 +411,7 @@ function run() {
     });
 
     // Player Bullet Firing
-    if(Game.spaceIsPressed && !Game.spaceWasPressed && !Game.playerTank.bullet) {
+    if(Game.spaceIsPressed && !Game.spaceWasPressed && tankCanFireBullet(Game.playerTank)) {
       bulletCreate(Game.playerTank);
     };
 
@@ -409,7 +420,7 @@ function run() {
       // TODO(Fede): This determines every frame if bullet will fire or not
       // That will make fire rate dependent of the frame rate, so maybe the randomness
       // should be about how many seconds will pass in order for the bullet to be fired
-      if(!enemy.tank.bullet) {
+      if(tankCanFireBullet(enemy.tank)) {
         if(Math.random() > 0.95) {
           bulletCreate(enemy.tank);
         }
@@ -508,37 +519,38 @@ function run() {
 // ENTITY DATA
 
 // Tank
-function tankGetData(tankType: string) {
+function tankGetData(tankType: string): TankData {
     var data =  {
       playerNormal: {
         width: 40,
         height: 40,
-        defaultSpeed: 300,
+        defaultSpeed: 100,
+        bulletSpeed: 800,
       },
       enemyNormal: {
         width: 40,
         height: 40,
-        defaultSpeed: 300,
+        defaultSpeed: 100,
+        bulletSpeed: 800,
       },
-    }[tankType]
+    }[tankType];
 
     return data;
 }
 
+function tankIsSolid(tank: Tank): boolean {
+  return !tank.isSpawning && !tank.wasDestroyed;
+}
+
+function tankCanFireBullet(tank: Tank): boolean {
+  return !tank.bullet && (tank.position !== null);
+}
+
 // GAME UPDATE
 
-function pickPlayerDirection(Game) {
-  if(Game.arrowRightIsPressed) {
-    Game.playerDirection = "right";
-  } else if(Game.arrowLeftIsPressed) {
-    Game.playerDirection = "left";
-  } else if(Game.arrowUpIsPressed) {
-    Game.playerDirection = "up";
-  } else if(Game.arrowDownIsPressed) {
-    Game.playerDirection = "down";
-  } else {
-    Game.playerDirection = Game.playerDirection;
-  }
+function pickRandomDirection(): string {
+  let newIndex = Math.floor(Math.random() * 4);
+  return ['up', 'down', 'right', 'left'][newIndex];
 }
 
 //NOTE(Fede) Asumes tank is effectively moving in its direction
@@ -602,7 +614,7 @@ function tankComputeMovementInDirection(Game, tank: Tank, dt: number) {
   var otherTanks = [Game.playerTank].concat(enemyTanks);
   var tankCollisions = [];
   otherTanks.forEach(function(otherTank) {
-    if(otherTank.id !== tank.id) {
+    if(otherTank.id !== tank.id && tankIsSolid(otherTank)) {
       var otherTankData = tankGetData(otherTank.tankType);
       var otherTankBoundaries = 
         getRectangleBoundaries(otherTank.position, otherTankData.width, otherTankData.height)
@@ -1139,6 +1151,10 @@ var mat3 = {
 };
 
 // MISC UTILS
+var time = {
+  seconds: 1000,
+}
+
 var vec2 = {
   copy: function(vec: Vector2) {
     return {
