@@ -147,7 +147,7 @@ function run() {
   var levelConfig = {
     playerSpawnPosition: {
       x: 300,
-      y: 400,
+      y: 440,
     },
     enemySpawnPositions: [
       { x: 20, y: 20},
