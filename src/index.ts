@@ -151,8 +151,8 @@ function run() {
     },
     enemySpawnPositions: [
       { x: 20, y: 20},
-      { x: 100, y: 20},
-      { x: 200, y: 20},
+      { x: 300, y: 20},
+      { x: 600, y: 20},
     ],
   }
 
@@ -218,7 +218,13 @@ function run() {
     nextEnemies: [
       "enemyNormal",
       "enemyNormal",
-      "enemyNormal"
+      "enemyNormal",
+      "enemyNormal",
+      "enemyNormal",
+      "enemyNormal",
+      "enemyNormal",
+      "enemyNormal",
+      "enemyNormal",
     ],
 
     // Other Entities
@@ -295,6 +301,10 @@ function run() {
      * UPDATE 
      */
     var dt = tFrame - Game.tLastRender;
+
+    if(Game.enemies.length === 0 && Game.nextEnemies.length === 0) {
+      alert("You win");
+    }
 
     if(Game.playerTank.wasDestroyed) {
       Game.playerLives--;
