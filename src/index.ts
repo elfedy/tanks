@@ -205,7 +205,7 @@ function run() {
     },
 
     // Enemies
-    enemySpawnCountdown: 10 * time.seconds,
+    enemySpawnCountdown: 3 * time.seconds,
     enemyColor: {
       r: 0.8,
       g: 0.2,
@@ -350,9 +350,11 @@ function run() {
     }
 
     // Spawn enemies
-    Game.enemySpawnCountdown -= dt;
+    if(Game.enemies.length < Game.enemiesMax) {
+      Game.enemySpawnCountdown -= dt;
+    }
     if(Game.enemySpawnCountdown <= 0) {
-      Game.enemySpawnCountdown = 10 * time.seconds;
+      Game.enemySpawnCountdown = 5 * time.seconds;
       if(Game.nextEnemies.length > 0) {
         let nextEnemyTank = Game.nextEnemies.pop();
         let spawnPositions = levelConfig.enemySpawnPositions;
