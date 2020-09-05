@@ -363,6 +363,8 @@ function run() {
         let tankData = tankGetData(nextEnemyTank);
         let enemy = {
           nextDirection: null,
+          changeDirectionCountdown: Math.floor((Math.random() * 5) + 2) * time.seconds,
+          bulletCountdown: (Math.random() * 2 + 1) * time.seconds,
           tank: {
             tankType: nextEnemyTank,
             position: newPosition,
@@ -401,12 +403,19 @@ function run() {
         break;
       }
 
+      enemy.changeDirectionCountdown -= dt;
+      if(enemy.changeDirectionCountdown <= 0) {
+        enemy.nextDirection = pickRandomDirection();
+        enemy.changeDirectionCountdown = (Math.floor(Math.random() * 5) + 2) * time.seconds;
+        break;
+      }
+
       var enemyMovement = tankComputeMovementInDirection(Game, enemy.tank, dt);
       enemy.tank.position = enemyMovement.newPosition;
 
       if(enemyMovement.collisions.length > 0) {
         var newIndex = Math.floor(Math.random() * 4);
-        enemy.nextDirection = ['up', 'down', 'right', 'left'][newIndex];
+        enemy.nextDirection = pickRandomDirection();
       }
     }
 
@@ -429,12 +438,11 @@ function run() {
 
     // Enemy Bullet Firing
     Game.enemies.forEach(function(enemy) {
-      // TODO(Fede): This determines every frame if bullet will fire or not
-      // That will make fire rate dependent of the frame rate, so maybe the randomness
-      // should be about how many seconds will pass in order for the bullet to be fired
       if(tankCanFireBullet(enemy.tank)) {
-        if(Math.random() > 0.95) {
+        enemy.bulletCountdown -= dt;
+        if(enemy.bulletCountdown <= 0) {
           bulletCreate(enemy.tank);
+          enemy.bulletCountdown = (Math.random() * 1) * time.seconds;
         }
       }
     })
