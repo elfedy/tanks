@@ -134,7 +134,7 @@ function run() {
 
   gl.vertexAttribPointer(glLocations.aPosition, size, dataType, normalize, stride, offset);
 
-// Ids for entities
+  // Ids for entities
   var entityIds = {
     current: 0,
     create: function(): number {
@@ -143,6 +143,38 @@ function run() {
       return prev;
     },
   }
+
+  // General game constants
+  let levelWidth = gl.canvas.width;
+  let levelHeight = gl.canvas.height;
+  let tileWidth = 20;
+  let tileHeight = 20;
+  let baseParams = {
+    width: 40,
+    height: 40,
+    x: levelWidth / 2 - 40 / 2,
+    y: levelHeight + 40 / 2,
+  }
+
+  // modify tile map based on baseParams
+  let baseTilePositions = 
+    [
+      [levelHeight / tileHeight - 1 , Math.floor(levelWidth / 2 / tileWidth) - 2],
+      [levelHeight / tileHeight - 2 , Math.floor(levelWidth / 2 / tileWidth) - 2],
+      [levelHeight / tileHeight - 3 , Math.floor(levelWidth / 2 / tileWidth) - 2],
+      [levelHeight / tileHeight - 3 , Math.floor(levelWidth / 2 / tileWidth) - 1],
+      [levelHeight / tileHeight - 3 , Math.floor(levelWidth / 2 / tileWidth) - 0],
+      [levelHeight / tileHeight - 3 , Math.floor(levelWidth / 2 / tileWidth) + 1],
+      [levelHeight / tileHeight - 2 , Math.floor(levelWidth / 2 / tileWidth) + 1],
+      [levelHeight / tileHeight - 1 , Math.floor(levelWidth / 2 / tileWidth) + 1],
+    ]
+
+  baseTilePositions.forEach((t) => {
+    console.log(t[0]);
+    console.log(t[1]);
+    tileMap[t[0]][t[1]] = 'b';
+  })
+
 
   var levelConfig = {
     playerSpawnPosition: {
@@ -154,6 +186,7 @@ function run() {
       { x: 300, y: 20},
       { x: 600, y: 20},
     ],
+    tileMap: tileMap,
   }
 
   // GAME SETUP
@@ -163,10 +196,10 @@ function run() {
     running: true,
 
     // Level
-    levelWidth: gl.canvas.width,
-    levelHeight: gl.canvas.height,
-    tileWidth: 20,
-    tileHeight: 20,
+    levelWidth: levelWidth,
+    levelHeight: levelHeight,
+    tileWidth: tileWidth,
+    tileHeight: tileWidth,
     tileRows: tileMap.length,
     tileCols: tileMap[0].length,
 
@@ -233,6 +266,12 @@ function run() {
       g: 1,
       b: 1,
       alpha: 1.0,
+    },
+    base: {
+      width: baseParams.width,
+      height: baseParams.height,
+      x: gl.canvas.width / 2,
+      y: gl.canvas.height - 40 / 2,
     },
     tiles: tileMap, 
   }
@@ -304,6 +343,7 @@ function run() {
 
     if(Game.enemies.length === 0 && Game.nextEnemies.length === 0) {
       alert("You win");
+      return;
     }
 
     if(Game.playerTank.wasDestroyed) {
@@ -464,6 +504,17 @@ function run() {
         enemy.tank
       )
     })
+
+    // Draw Base
+    drawRectangle(
+      gl,
+      glLocations,
+      {r: 0.8, g: 0.7, b: 0.8, alpha: 1.0},
+      Game.base.width,
+      Game.base.height,
+      Game.base.x,
+      Game.base.y,
+    );
       
 
     // Draw Tile
@@ -542,14 +593,14 @@ function run() {
 function tankGetData(tankType: string): TankData {
     var data =  {
       playerNormal: {
-        width: 40,
-        height: 40,
+        width: 35,
+        height: 35,
         defaultSpeed: 100,
         bulletSpeed: 800,
       },
       enemyNormal: {
-        width: 40,
-        height: 40,
+        width: 35,
+        height: 35,
         defaultSpeed: 100,
         bulletSpeed: 800,
       },
