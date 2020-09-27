@@ -270,8 +270,11 @@ function run() {
     base: {
       width: baseParams.width,
       height: baseParams.height,
-      x: gl.canvas.width / 2,
-      y: gl.canvas.height - 40 / 2,
+      position: {
+        x: gl.canvas.width / 2,
+        y: gl.canvas.height - 40 / 2,
+      },
+      isDestroyed: false
     },
     tiles: tileMap, 
   }
@@ -512,8 +515,8 @@ function run() {
       {r: 0.8, g: 0.7, b: 0.8, alpha: 1.0},
       Game.base.width,
       Game.base.height,
-      Game.base.x,
-      Game.base.y,
+      Game.base.position.x,
+      Game.base.position.y,
     );
       
 
@@ -699,8 +702,18 @@ function tankComputeMovementInDirection(Game, tank: Tank, dt: number) {
   if(tankCollisions.length > 0) {
     newPosition = vec2.copy(tank.position);
   }
-  boundaries = getRectangleBoundaries(newPosition, relativeHeight, relativeWidth);
+  boundaries = getRectangleBoundaries(newPosition, relativeWidth, relativeHeight);
   collisions = collisions.concat(tankCollisions);
+
+  // Base Collisions
+  let baseBoundaries = getRectangleBoundaries(Game.base.position, Game.base.width, Game.base.height)
+  if(rectangleBoundariesAreColliding(boundaries, baseBoundaries)) {
+    console.log('collissionnnnn');
+    newPosition = vec2.copy(tank.position);
+    boundaries = getRectangleBoundaries(newPosition, relativeHeight, relativeWidth);
+    collisions = collisions.concat({entity: 'base', metadata: {boundaries: baseBoundaries}});
+  }
+
 
   return {
     newPosition: newPosition,
