@@ -170,8 +170,6 @@ function run() {
     ]
 
   baseTilePositions.forEach((t) => {
-    console.log(t[0]);
-    console.log(t[1]);
     tileMap[t[0]][t[1]] = 'b';
   })
 
@@ -274,7 +272,7 @@ function run() {
         x: gl.canvas.width / 2,
         y: gl.canvas.height - 40 / 2,
       },
-      isDestroyed: false
+      wasDestroyed: false
     },
     tiles: tileMap, 
   }
@@ -358,6 +356,9 @@ function run() {
         alert("Game Over");
         return;
       }
+    } else if(Game.base.wasDestroyed) {
+      alert("Game Over");
+      return;
     } else if(Game.playerTank.isSpawning) {
       Game.playerTank.position = vec2.copy(Game.playerSpawnPosition); 
       Game.playerTank.isSpawning = false;
@@ -509,17 +510,18 @@ function run() {
     })
 
     // Draw Base
-    drawRectangle(
-      gl,
-      glLocations,
-      {r: 0.8, g: 0.7, b: 0.8, alpha: 1.0},
-      Game.base.width,
-      Game.base.height,
-      Game.base.position.x,
-      Game.base.position.y,
-    );
+    if(!Game.base.wasDestroyed) {
+      drawRectangle(
+        gl,
+        glLocations,
+        {r: 0.8, g: 0.7, b: 0.8, alpha: 1.0},
+        Game.base.width,
+        Game.base.height,
+        Game.base.position.x,
+        Game.base.position.y,
+      );
+    }
       
-
     // Draw Tile
     var tileColors = {
       b: {
@@ -708,7 +710,6 @@ function tankComputeMovementInDirection(Game, tank: Tank, dt: number) {
   // Base Collisions
   let baseBoundaries = getRectangleBoundaries(Game.base.position, Game.base.width, Game.base.height)
   if(rectangleBoundariesAreColliding(boundaries, baseBoundaries)) {
-    console.log('collissionnnnn');
     newPosition = vec2.copy(tank.position);
     boundaries = getRectangleBoundaries(newPosition, relativeHeight, relativeWidth);
     collisions = collisions.concat({entity: 'base', metadata: {boundaries: baseBoundaries}});
@@ -784,6 +785,7 @@ function bulletUpdate(tank: Tank, Game, dt) {
 
   var boundaries = getRectangleBoundaries(newPosition, relativeWidth, relativeHeight);
 
+  // Screen Limits
   var screenLimitsCollisions = 
     rectangleBoundariesCollisionsScreenLimits(
       Game, boundaries, newPosition, relativeWidth, relativeHeight);
@@ -791,6 +793,7 @@ function bulletUpdate(tank: Tank, Game, dt) {
   newPosition = screenLimitsCollisions.position;
   collisions = collisions.concat(screenLimitsCollisions.collisions);
 
+  // Tiles
   var tileCollisions = 
     rectangleBoundariesCollisionsTiles(
       Game, boundaries, newPosition, movementEstimate, relativeWidth, relativeHeight, ["b", "s"]);
@@ -805,6 +808,7 @@ function bulletUpdate(tank: Tank, Game, dt) {
     }
   })
 
+  // Tanks
   if(tank.player) {
     Game.enemies.forEach(function(enemy) {
       var tankData = tankGetData(enemy.tank.tankType);
@@ -845,8 +849,17 @@ function bulletUpdate(tank: Tank, Game, dt) {
       collisions.push({entity: "tank"})
     }
   }
-
   bullet.position = newPosition;
+
+  // Base
+  if(rectangleBoundariesAreColliding(
+    boundaries,
+    getRectangleBoundaries(Game.base.position, Game.base.width, Game.base.height))
+  ) {
+    Game.base.wasDestroyed = true;
+    collisions.push({entity: "base"});
+  }
+
   if(collisions.length > 0) {
     // Remove Bullet
     tank.bullet.collided = true;
