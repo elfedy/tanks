@@ -405,25 +405,44 @@ function run() {
         let newPositionIndex = Math.floor(spawnPositions.length * Math.random());
         let newPosition = spawnPositions[newPositionIndex];
         let tankData = tankGetData(nextEnemyTank);
-        let enemy = {
-          nextDirection: null,
-          changeDirectionCountdown: Math.floor((Math.random() * 5) + 2) * time.seconds,
-          bulletCountdown: (Math.random() * 2 + 1) * time.seconds,
-          tank: {
-            tankType: nextEnemyTank,
-            position: newPosition,
-            direction: pickRandomDirection(),
-            speed: tankData.defaultSpeed,
-            bullet: null,
-            bulletSpeed: tankData.bulletSpeed,
-            player: false,
-            wasDestroyed: false,
-            isSpawning: true,
-            id: entityIds.create(),
+        let enemyTanks = Game.enemies.map(e => e.tank);
+        let otherTanks = [Game.playerTank].concat(enemyTanks);
+        let boundaries = getRectangleBoundaries(newPosition, tankData.width, tankData.height);
+
+        // Do not spawn enemy if there is a collision
+        let isColliding = false
+        otherTanks.forEach(function(otherTank) {
+          let otherTankData = tankGetData(otherTank.tankType);
+          let otherTankBoundaries = 
+            getRectangleBoundaries(otherTank.position, otherTankData.width, otherTankData.height)
+
+          if(rectangleBoundariesAreColliding(boundaries, otherTankBoundaries)) {
+            isColliding = true
           }
+        })
+
+        if(!isColliding) {
+          let enemy = {
+            nextDirection: null,
+            changeDirectionCountdown: Math.floor((Math.random() * 5) + 2) * time.seconds,
+            bulletCountdown: (Math.random() * 2 + 1) * time.seconds,
+            tank: {
+              tankType: nextEnemyTank,
+              position: newPosition,
+              direction: pickRandomDirection(),
+              speed: tankData.defaultSpeed,
+              bullet: null,
+              bulletSpeed: tankData.bulletSpeed,
+              player: false,
+              wasDestroyed: false,
+              isSpawning: true,
+              id: entityIds.create(),
+            }
+          }
+          Game.enemies.push(enemy);
         }
 
-        Game.enemies.push(enemy);
+
       }
     }
 
@@ -594,7 +613,7 @@ function run() {
 
 // ENTITY DATA
 
-// Tank
+// TANK
 function tankGetData(tankType: string): TankData {
     var data =  {
       playerNormal: {
