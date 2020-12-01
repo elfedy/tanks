@@ -1,4 +1,8 @@
 // TYPES 
+type Shaders = {
+  vertex: string,
+  fragment: string,
+}
 
 type Color = {
   r: number,
@@ -41,12 +45,17 @@ type Bullet = {
   collided: boolean,
 }
 
-window.onload = run; 
+window.onload = () => {
+  var image = new Image();
+  image.src = "/tank.png";
+  image.onload = () => {
+    run(image);
+  }
+}; 
 
-function run() {
+function run(image) {
   var canvas = <HTMLCanvasElement> document.getElementById('canvas');
   var gl = canvas.getContext('webgl');
-
 
   // tile map: 640 x 480 means 24 rows of 32 tiles for 20 x 20 tiles
 
@@ -84,55 +93,98 @@ function run() {
   }
 
   // SHADERS
-  var vsSource = `
-    attribute vec2 aPosition;
-    uniform mat3 uMatrix;
-    
-    void main() {
-      gl_Position = vec4((uMatrix * vec3(aPosition, 1)).xy, 0, 1);
-    }
-  `
+  // Color
+  var shadersColor = {
+    vertex: `
+      attribute vec2 aPosition;
+      uniform mat3 uMatrix;
+      
+      void main() {
+        gl_Position = vec4((uMatrix * vec3(aPosition, 1)).xy, 0, 1);
+      }
+    `,
+    fragment: `
+      precision mediump float;
 
-  var fsSource = `
-    precision mediump float;
+      uniform vec4 uColor;
 
-    uniform vec4 uColor;
+      void main() {
+        gl_FragColor = uColor;
+      }
+    `,
+  };
 
-    void main() {
-      gl_FragColor = uColor;
-    }
-  `
+  // Texture
+  var shadersTexture = {
+    vertex: `
+      attribute vec2 aPosition;
+      attribute vec2 aTexCoord;
+      uniform mat3 uMatrix;
+      varying vec2 vTexCoord;
+      
+      void main() {
+        gl_Position = vec4((uMatrix * vec3(aPosition, 1)).xy, 0, 1);
+        vTexCoord = aTexCoord;
+      }
+    `,
+    fragment: `
+      precision mediump float;
+
+      uniform sampler2D uImage;
+      varying vec2 vTexCoord;
+
+      void main() {
+        gl_FragColor = texture2D(uImage, vTexCoord);
+      }
+    `,
+  };
 
   // WEBGL SETUP
 
-  // Compile and use shader program
-  var shaderProgram = initShaderProgram(gl, vsSource, fsSource);
-  gl.useProgram(shaderProgram);
+  // Compile and use shader programs
+  let colorShaderProgram = initShaderProgram(gl, shadersColor);
 
-  // Get shader variable locations
-  var glLocations = {
-    aPosition: gl.getAttribLocation(shaderProgram, "aPosition"),
-    uColor: gl.getUniformLocation(shaderProgram, "uColor"),
-    uMatrix: gl.getUniformLocation(shaderProgram, "uMatrix"),
-  };
+  let colorShader = {
+    program: colorShaderProgram,
+    buffers: {
+      aPosition: gl.createBuffer(),
+    },
+    locations: {
+      aPosition: gl.getAttribLocation(colorShaderProgram, "aPosition"),
+      uColor: gl.getUniformLocation(colorShaderProgram, "uColor"),
+      uMatrix: gl.getUniformLocation(colorShaderProgram, "uMatrix"),
+    }
+  }
+
+  let textureShaderProgram = initShaderProgram(gl, shadersTexture);
+
+  let textureShader = {
+    program: textureShaderProgram,
+    buffers: {
+      aPosition: gl.createBuffer(),
+      aTexCoord: gl.createBuffer(),
+    },
+    locations: {
+      aPosition: gl.getAttribLocation(textureShaderProgram, "aPosition"),
+      aTexCoord: gl.getAttribLocation(textureShaderProgram, "aTexCoord"),
+      uMatrix: gl.getUniformLocation(textureShaderProgram, "uMatrix"),
+      uImage: gl.getUniformLocation(textureShaderProgram, "uImage"),
+    },
+    textures: {
+      tank: gl.createTexture(),
+    },
+  }
+
 
   // Tell WebGL how to convert from clip space to pixels
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-  // Create and bind buffer to the position attribute
-  var positionBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-  gl.enableVertexAttribArray(glLocations.aPosition);
 
-  // Tell the attribute how to get data out of positionBuffer (ARRAY BUFFER)
-  var size = 2; // 2 components per iteration
-  var dataType = gl.FLOAT;
-  var normalize = false;
-  var stride = 0; // stride is bytes between beggining of consecutive vertex attributes in buffer. 0 means
-                  // tightly packed (one begins when the previous one ends with no space in between)
-  var offset = 0; // start at the begining of the buffer
-
-  gl.vertexAttribPointer(glLocations.aPosition, size, dataType, normalize, stride, offset);
+  // Add some magic stuff make alpha in images blend with the rest.
+  // TODO(Fede): Doesn't this make the colors darker somehow?
+  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
   // Ids for entities
   var entityIds = {
@@ -510,19 +562,38 @@ function run() {
       }
     })
 
+    // DRAW
+
+    // ColorShader
+    // Create and bind buffer to the position attribute
+    gl.useProgram(colorShaderProgram);
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorShader.buffers.aPosition);
+    gl.vertexAttribPointer(
+      colorShader.locations.aPosition,
+      2,  // size: components per iteration
+      gl.FLOAT,  // data type
+      false, // normalize
+      0, // stride: bytes between beggining of consecutive vetex attributes in buffer
+      0 // offset: where to start reading data from the buffer
+    );
+    // Enable vertex attribute
+    gl.enableVertexAttribArray(colorShader.locations.aPosition);
+
     // Draw Player
-    tankDraw(
+    /*
+    colorShaderTankDraw(
       gl,
-      glLocations,
+      colorShader,
       Game.playerColor,
       Game.playerTank
     )
+     */
 
     // Draw Enemies
     Game.enemies.forEach(function(enemy) {
-      tankDraw(
+      colorShaderDrawTank(
         gl,
-        glLocations,
+        colorShader,
         Game.enemyColor,
         enemy.tank
       )
@@ -530,9 +601,9 @@ function run() {
 
     // Draw Base
     if(!Game.base.wasDestroyed) {
-      drawRectangle(
+      colorShaderDrawRectangle(
         gl,
-        glLocations,
+        colorShader,
         {r: 0.8, g: 0.7, b: 0.8, alpha: 1.0},
         Game.base.width,
         Game.base.height,
@@ -573,9 +644,9 @@ function run() {
       for(var j = 0; j < Game.tileCols; j++) {
         var tile = Game.tiles[i][j];
         if(tile !== 'x') {
-          drawRectangle(
+          colorShaderDrawRectangle(
             gl,
-            glLocations,
+            colorShader,
             tileColors[tile],
             Game.tileWidth,
             Game.tileHeight,
@@ -588,14 +659,28 @@ function run() {
 
     // DrawBullets
     if(Game.playerTank.bullet) {
-      bulletDraw(gl, glLocations, Game, Game.playerTank.bullet);
+      colorShaderDrawBullet(gl, colorShader, Game, Game.playerTank.bullet);
     }
 
     Game.enemies.forEach(function(enemy) {
       if(enemy.tank.bullet) {
-        bulletDraw(gl, glLocations, Game, enemy.tank.bullet);
+        colorShaderDrawBullet(gl, colorShader, Game, enemy.tank.bullet);
       }
     });
+
+    // TextureShader
+    // Create and bind buffer to the position attribute
+    gl.useProgram(textureShaderProgram);
+
+    // TODO...
+
+    // Draw Player
+    textureShaderDrawTank(
+      gl,
+      textureShader,
+      image,
+      Game.playerTank
+    )
 
     // Store input state
     Game.spaceWasPressed = Game.spaceIsPressed;
@@ -1065,8 +1150,9 @@ function squareVertices(width: number, height: number, x: number, y: number): nu
   ]
 }
 
-function drawRectangle(gl, glLocations, color: Color, width, height, x, y)
+function colorShaderDrawRectangle(gl, colorShader, color: Color, width, height, x, y)
 {
+    var glLocations = colorShader.locations;
     // Set matices
     var matrixProjection = mat3.projection(gl.canvas.width, gl.canvas.height);
     var matrixChangeOrigin = mat3.translation(-width / 2, -height / 2);
@@ -1090,7 +1176,8 @@ function drawRectangle(gl, glLocations, color: Color, width, height, x, y)
     gl.drawArrays(primitiveType, offset, count);
 }
 
-function tankDraw(gl, glLocations, color, tank) {
+function colorShaderDrawTank(gl, colorShader, color, tank) {
+    var glLocations = colorShader.locations;
     var tankData = tankGetData(tank.tankType);
     // Rotation angle
     var theta = 0;
@@ -1134,10 +1221,10 @@ function tankDraw(gl, glLocations, color, tank) {
     gl.drawArrays(primitiveType, offset, count);
 }
 
-function bulletDraw(gl, glLocations, Game, bullet: Bullet) {
-    drawRectangle(
+function colorShaderDrawBullet(gl, colorShader, Game, bullet: Bullet) {
+    colorShaderDrawRectangle(
       gl,
-      glLocations,
+      colorShader,
       Game.bulletColor,
       bullet.width,
       bullet.height,
@@ -1146,10 +1233,85 @@ function bulletDraw(gl, glLocations, Game, bullet: Bullet) {
     )
 }
 
+function textureShaderDrawTank(gl, textureShader, image, tank) {
+  gl.bindBuffer(gl.ARRAY_BUFFER, textureShader.buffers.aPosition);
+  gl.vertexAttribPointer(
+    textureShader.locations.aPosition,
+    2,  // size: components per iteration
+    gl.FLOAT,  // data type
+    false, // normalize
+    0, // stride: bytes between beggining of consecutive vetex attributes in buffer
+    0 // offset: where to start reading data from the buffer
+  );
+  // Enable vertex attribute
+  gl.enableVertexAttribArray(textureShader.locations.aPosition);
+
+  let tankData = tankGetData(tank.tankType);
+  // Rotation angle
+  let theta = 0;
+  switch(tank.direction) {
+    case('down'):
+      theta = Math.PI;
+      break;
+    case('right'):
+      theta = 3 / 2 * Math.PI;
+      break;
+    case('left'):
+      theta = Math.PI / 2;
+      break;
+  }
+
+  // Set matices
+  var matrixProjection = mat3.projection(gl.canvas.width, gl.canvas.height);
+  var matrixChangeOrigin = mat3.translation(-tankData.width / 2, -tankData.height / 2);
+  var matrixRotation = mat3.rotation(theta)
+  var matrixTranslation = mat3.translation(tank.position.x, tank.position.y);
+  var matrix = mat3.identity()
+  matrix = mat3.multiply(matrix, matrixProjection);
+  matrix = mat3.multiply(matrix, matrixTranslation);
+  matrix = mat3.multiply(matrix, matrixRotation);
+  matrix = mat3.multiply(matrix, matrixChangeOrigin);
+  gl.uniformMatrix3fv(textureShader.locations.uMatrix, false, matrix);
+
+  // Add vertices to array buffer (Requires a buffer to been previously bound to gl.ARRAY_BUFFER)
+  var tankVertices = squareVertices(tankData.width, tankData.height, 0, 0);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(tankVertices), gl.STATIC_DRAW);
+
+  // Make tank texture the active texture object
+  gl.bindTexture(gl.TEXTURE_2D, textureShader.textures.tank);
+  // Set texture parameters
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+
+  // Upload texture image to the GPU's texture object
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image)
+
+  // provide texture coordinates for the tank rectangle
+  gl.bindBuffer(gl.ARRAY_BUFFER, textureShader.buffers.aTexCoord)
+  // TODO(Ver que el tanque esta torcido)
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+    0.0, 0.0,
+    0.0, 1.0,
+    1.0, 1.0,
+    0.0, 0.0,
+    1.0, 0.0,
+    1.0, 1.0,
+  ]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(textureShader.locations.aTexCoord);
+  gl.vertexAttribPointer(textureShader.locations.aTexCoord, 2, gl.FLOAT, false, 0, 0);
+
+  var primitiveType = gl.TRIANGLES;
+  var offset = 0;
+  var count = 6;
+  gl.drawArrays(primitiveType, offset, count);
+}
+
 // SHADER MANAGEMENT
-function initShaderProgram(gl, vsSource, fsSource) {
-  var vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
-  var fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
+function initShaderProgram(gl, shaders: Shaders) {
+  var vertexShader = loadShader(gl, gl.VERTEX_SHADER, shaders.vertex);
+  var fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, shaders.fragment);
 
   // console.log('Vertex shader: ', gl.getShaderInfoLog(vertexShader) || 'OK');
   // console.log('Fragment shader: ', gl.getShaderInfoLog(fragmentShader) || 'OK');
