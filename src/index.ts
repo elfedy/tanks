@@ -46,14 +46,27 @@ type Bullet = {
 }
 
 window.onload = () => {
-  var image = new Image();
-  image.src = "/tank.png";
-  image.onload = () => {
-    run(image);
+  var imageCount = 2;
+  var imageLoaded = 0;
+  var imagePlayer = new Image();
+  imagePlayer.src = "/tank_player.png";
+  var imageEnemy = new Image();
+  imageEnemy.src = "/tank_enemy.png";
+  imagePlayer.onload = () => {
+    imageLoaded++;
+    if(imageLoaded == imageCount) {
+      run([imagePlayer, imageEnemy])
+    }
+  }
+  imageEnemy.onload = () => {
+    imageLoaded++;
+    if(imageLoaded == imageCount) {
+      run([imagePlayer, imageEnemy])
+    }
   }
 }; 
 
-function run(image) {
+function run(images) {
   var canvas = <HTMLCanvasElement> document.getElementById('canvas');
   var gl = canvas.getContext('webgl');
 
@@ -580,24 +593,6 @@ function run(image) {
     gl.enableVertexAttribArray(colorShader.locations.aPosition);
 
     // Draw Player
-    /*
-    colorShaderTankDraw(
-      gl,
-      colorShader,
-      Game.playerColor,
-      Game.playerTank
-    )
-     */
-
-    // Draw Enemies
-    Game.enemies.forEach(function(enemy) {
-      colorShaderDrawTank(
-        gl,
-        colorShader,
-        Game.enemyColor,
-        enemy.tank
-      )
-    })
 
     // Draw Base
     if(!Game.base.wasDestroyed) {
@@ -678,9 +673,19 @@ function run(image) {
     textureShaderDrawTank(
       gl,
       textureShader,
-      image,
+      images[0],
       Game.playerTank
     )
+
+    // Draw Enemies
+    Game.enemies.forEach(function(enemy) {
+      textureShaderDrawTank(
+        gl,
+        textureShader,
+        images[1],
+        enemy.tank
+      )
+    })
 
     // Store input state
     Game.spaceWasPressed = Game.spaceIsPressed;
