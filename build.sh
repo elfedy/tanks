@@ -32,5 +32,5 @@ echo .ts Files compiled successfully
 
 # Copy images
 echo Copying .png files...
-cp src/*.png build/
+cp src/assets/*.png build/
 echo .png Files copied successfully
