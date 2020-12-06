@@ -1,4 +1,3 @@
-
 window.onload = () => {
   var imagesMeta = {
     tankPlayer: {

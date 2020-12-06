@@ -7,7 +7,7 @@ const stop = fsevents.watch('./src', (path, flags, id) => {
 	const info = fsevents.getInfo(path, flags, id);
 	if(info.event === 'moved') {
 		console.log(`Detected change in ${info.path}.`);
-		exec('./build.sh', (error, stdout, stderr) => {
+		exec('./build.sh dev', (error, stdout, stderr) => {
 			if(error) {
 				console.log(`error: ${error.message}`);
 			}

@@ -5,6 +5,21 @@ set -o pipefail
 
 echo Starting build...
 
+if [ -z "$1" ]
+  then
+    env="dev"
+  else
+    if [ $1 == "dev" ] || [ $1 == "prod" ]
+      then
+        env=$1
+      else
+        echo Invalid env arguement $1
+        exit 1
+    fi
+fi
+
+echo Building for $env environment
+
 echo Checking build dependencies...
 # TODO(Fede): check for typescript version and give an error
 # if it is incorrect.
@@ -27,7 +42,8 @@ echo .html Files copied successfully
 
 # Get js file
 echo Compiling .ts files...
-tsc src/types.ts src/index.ts --outFile build/index.js --lib dom,es2015
+envFile="src/config/${env}.ts"
+tsc $envFile src/types.ts src/index.ts --outFile build/index.js --lib dom,es2015
 echo .ts Files compiled successfully
 
 # Copy images
