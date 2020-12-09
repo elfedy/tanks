@@ -378,6 +378,10 @@ function run(imagesMeta) {
 
   // Define main loop
   function main(tFrame) {
+    let DEBUGTimestamp = tFrame;
+    if(Game.running) {
+      requestAnimationFrame(main);
+    }
     // Clear the canvas
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -388,7 +392,10 @@ function run(imagesMeta) {
     var dt = tFrame - Game.tLastRender;
 
     if(Game.enemies.length === 0 && Game.nextEnemies.length === 0) {
-      alert("You win");
+      if(Game.running) {
+        alert("You win");
+      }
+      Game.running = false;
       return;
     }
 
@@ -398,11 +405,17 @@ function run(imagesMeta) {
         Game.playerTank.isSpawning = true;
         Game.playerTank.wasDestroyed = false;
       } else {
-        alert("Game Over");
+        if(Game.running) {
+          alert("Game Over");
+        }
+        Game.running = false;
         return;
       }
     } else if(Game.base.wasDestroyed) {
-      alert("Game Over");
+      if(Game.running) {
+        alert("Game Over");
+      }
+      Game.running = false;
       return;
     } else if(Game.playerTank.isSpawning) {
       Game.playerTank.position = vec2.copy(Game.playerSpawnPosition); 
@@ -555,6 +568,8 @@ function run(imagesMeta) {
       }
     })
 
+    DEBUGTimestamp = DEBUGTime("Update", DEBUGTimestamp);
+
     // DRAW
 
     // ColorShader
@@ -571,8 +586,6 @@ function run(imagesMeta) {
     );
     // Enable vertex attribute
     gl.enableVertexAttribArray(colorShader.locations.aPosition);
-
-    // Draw Player
 
     // Draw Base
     if(!Game.base.wasDestroyed) {
@@ -599,6 +612,8 @@ function run(imagesMeta) {
       }
     });
 
+    DEBUGTimestamp = DEBUGTime("Color Shader Draw", DEBUGTimestamp);
+
     // TextureShader
     // Create and bind buffer to the position attribute
     gl.useProgram(textureShaderProgram);
@@ -620,6 +635,8 @@ function run(imagesMeta) {
         enemy.tank
       )
     })
+
+    DEBUGTimestamp = DEBUGTime("Tank Draw", DEBUGTimestamp);
 
     // Draw Tiles
     for(var i = 0; i < Game.tileRows; i++) {
@@ -654,14 +671,18 @@ function run(imagesMeta) {
       }
     }
 
+    DEBUGTimestamp = DEBUGTime("Tiles Draw", DEBUGTimestamp);
+
     // Store input state
     Game.spaceWasPressed = Game.spaceIsPressed;
 
     Game.tLastRender = tFrame;
 
-    if(Game.running) {
-      requestAnimationFrame(main);
-    }
+    // END
+    let timeSpent = performance.now() - tFrame;
+    DEBUG("Frame took " + timeSpent + " milliseconds");
+    DEBUG("FPS: " + (1000 / timeSpent));
+
   };
 
   // Run the main Loop
@@ -1441,4 +1462,20 @@ function arrayUnique(array: any[]): any[] {
   })
 
   return result;
+}
+
+function DEBUG(log: string) {
+  if (Config.debug) {
+    console.log(log);
+  }
+}
+
+function DEBUGTime(log: string, start: number): number {
+  let end = performance.now();
+  if (Config.debug) {
+    let duration = end - start;
+    console.log(`${log}: ${duration}ms`)
+  }
+
+  return end;
 }
