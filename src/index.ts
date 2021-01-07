@@ -1,52 +1,12 @@
 window.onload = () => {
-  var imagesMeta = {
-    tankPlayer: {
-      file: "/tank_player.png",
-      pos: 0,
-      image: null,
-    },
-    tankEnemy: {
-      file: "/tank_enemy.png",
-      pos: 1,
-      image: null,
-    },
-    tileBrick: {
-      file: "/tile_brick.png",
-      pos: 2,
-      image: null,
-    },
-    tileGrass: {
-      file: "/tile_grass.png",
-      pos: 3,
-      image: null,
-    },
-    tileSteel: {
-      file: "/tile_steel.png",
-      pos: 4,
-      image: null,
-    },
-    tileWater: {
-      file: "/tile_water.png",
-      pos: 5,
-      image: null,
-    },
-  };
-  var imagesLoaded = 0;
-  Object.keys(imagesMeta).forEach(key => {
-    var meta = imagesMeta[key];
-    var image = new Image();
-    image.src = meta.file
-    image.onload = () => {
-      imagesLoaded++;
-      imagesMeta[key].image = image;
-      if(imagesLoaded == Object.keys(imagesMeta).length) {
-        run(imagesMeta);
-      }
-    }
-  })
+  var sprite = new Image();
+  sprite.src = './sprite.png'; 
+  sprite.onload = () => {
+      run(sprite);
+  }
 }; 
 
-function run(imagesMeta) {
+function run(sprite) {
   var canvas = <HTMLCanvasElement> document.getElementById('canvas');
   var gl = canvas.getContext('webgl');
 
@@ -107,7 +67,6 @@ function run(imagesMeta) {
     `,
   };
 
-  // Texture
   var shadersTexture = {
     vertex: `
       attribute vec2 aPosition;
@@ -164,16 +123,24 @@ function run(imagesMeta) {
       uImage: gl.getUniformLocation(textureShaderProgram, "uImage"),
     },
     textures: {
-      image: gl.createTexture(),
+      sprite: gl.createTexture(),
     },
   }
+  // Make shader texture the active texture
+  gl.bindTexture(gl.TEXTURE_2D, textureShader.textures.sprite);
+  // Set texture parameters
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
 
+  // Upload sprite image to the GPU's texture object
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, sprite)
 
   // Tell WebGL how to convert from clip space to pixels
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-
-  // Add some magic stuff make alpha in images blend with the rest.
+  // Add some magic stuff to make alpha in images blend with the rest.
   // TODO(Fede): Doesn't this make the colors darker somehow?
   gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
   gl.enable(gl.BLEND);
@@ -622,7 +589,7 @@ function run(imagesMeta) {
     textureShaderDrawTank(
       gl,
       textureShader,
-      imagesMeta.tankPlayer.image,
+      'tankPlayer',
       Game.playerTank
     )
 
@@ -631,7 +598,7 @@ function run(imagesMeta) {
       textureShaderDrawTank(
         gl,
         textureShader,
-        imagesMeta.tankEnemy.image,
+        'tankEnemy',
         enemy.tank
       )
     })
@@ -639,86 +606,37 @@ function run(imagesMeta) {
     DEBUGTimestamp = DEBUGTime("Tank Draw", DEBUGTimestamp);
 
     // Draw Tiles
-    let tilesToDraw = {b: [], s: [], g: [], w: []}
-    for(var i = 0; i < Game.tileRows; i++) {
-      for(var j = 0; j < Game.tileCols; j++) {
-        var tile = Game.tiles[i][j];
+    for(var row = 0; row < Game.tileRows; row++) {
+      for(var col = 0; col < Game.tileCols; col++) {
+        var tile = Game.tiles[row][col];
         if(tile !== 'x') {
-          tilesToDraw[tile].push([i, j]);
+          let tileName
+          switch(tile) {
+            case 'b':
+              tileName = 'tileBrick';
+              break;
+            case 's':
+              tileName = 'tileSteel';
+              break;
+            case 'g':
+              tileName = 'tileGrass';
+              break;
+            case 'w':
+              tileName = 'tileWater';
+              break;
+          }
+          textureShaderDrawRectangle(
+            gl,
+            textureShader,
+            tileName,
+            Game.tileWidth,
+            Game.tileHeight,
+            col * Game.tileWidth + Game.tileWidth / 2,
+            row * Game.tileHeight + Game.tileHeight / 2
+          );
         }
       }
     }
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, textureShader.buffers.aPosition);
-    gl.vertexAttribPointer(
-      textureShader.locations.aPosition,
-      2,  // size: components per iteration
-      gl.FLOAT,  // data type
-      false, // normalize
-      0, // stride: bytes between beggining of consecutive vetex attributes in buffer
-      0 // offset: where to start reading data from the buffer
-    );
-    // Enable vertex attribute
-    gl.enableVertexAttribArray(textureShader.locations.aPosition);
-
-    let tileVertices = [];
-    let tileTextureCoords = [];
-    // Make tank texture the active texture object
-    gl.bindTexture(gl.TEXTURE_2D, textureShader.textures.image);
-    // Set texture parameters
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-
-    // Upload texture image to the GPU's texture object
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, imagesMeta.tileBrick.image)
-    tilesToDraw.b.forEach((tile) => {
-      textureShaderDrawRectangle(
-        gl,
-        textureShader,
-        Game.tileWidth,
-        Game.tileHeight,
-        Math.floor(tile[1] * Game.tileWidth + Game.tileWidth / 2),
-        Math.floor(tile[0] * Game.tileHeight + Game.tileHeight / 2)
-      );
-    })
-
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, imagesMeta.tileSteel.image)
-    tilesToDraw.s.forEach((tile) => {
-      textureShaderDrawRectangle(
-        gl,
-        textureShader,
-        Game.tileWidth,
-        Game.tileHeight,
-        Math.floor(tile[1] * Game.tileWidth + Game.tileWidth / 2),
-        Math.floor(tile[0] * Game.tileHeight + Game.tileHeight / 2)
-      );
-    })
-
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, imagesMeta.tileWater.image)
-    tilesToDraw.w.forEach((tile) => {
-      textureShaderDrawRectangle(
-        gl,
-        textureShader,
-        Game.tileWidth,
-        Game.tileHeight,
-        Math.floor(tile[1] * Game.tileWidth + Game.tileWidth / 2),
-        Math.floor(tile[0] * Game.tileHeight + Game.tileHeight / 2)
-      );
-    })
-
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, imagesMeta.tileGrass.image)
-    tilesToDraw.g.forEach((tile) => {
-      textureShaderDrawRectangle(
-        gl,
-        textureShader,
-        Game.tileWidth,
-        Game.tileHeight,
-        Math.floor(tile[1] * Game.tileWidth + Game.tileWidth / 2),
-        Math.floor(tile[0] * Game.tileHeight + Game.tileHeight / 2)
-      );
-    })
 
     DEBUGTimestamp = DEBUGTime("Tiles Draw", DEBUGTimestamp);
 
@@ -1230,7 +1148,7 @@ function colorShaderDrawBullet(gl, colorShader, Game, bullet: Bullet) {
     )
 }
 
-function textureShaderDrawTank(gl, textureShader, image, tank) {
+function textureShaderDrawTank(gl, textureShader, textureName, tank) {
   gl.bindBuffer(gl.ARRAY_BUFFER, textureShader.buffers.aPosition);
   gl.vertexAttribPointer(
     textureShader.locations.aPosition,
@@ -1274,27 +1192,12 @@ function textureShaderDrawTank(gl, textureShader, image, tank) {
   var tankVertices = squareVertices(tankData.width, tankData.height, 0, 0);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(tankVertices), gl.STATIC_DRAW);
 
-  // Make tank texture the active texture object
-  gl.bindTexture(gl.TEXTURE_2D, textureShader.textures.image);
-  // Set texture parameters
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-
-  // Upload texture image to the GPU's texture object
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image)
-
   // provide texture coordinates for the tank rectangle
   gl.bindBuffer(gl.ARRAY_BUFFER, textureShader.buffers.aTexCoord)
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-    0.0, 0.0,
-    0.0, 1.0,
-    1.0, 1.0,
-    0.0, 0.0,
-    1.0, 0.0,
-    1.0, 1.0,
-  ]), gl.STATIC_DRAW);
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array(textureShaderGetTextureCoords(textureName)),
+    gl.STATIC_DRAW);
   gl.enableVertexAttribArray(textureShader.locations.aTexCoord);
   gl.vertexAttribPointer(textureShader.locations.aTexCoord, 2, gl.FLOAT, false, 0, 0);
 
@@ -1304,8 +1207,25 @@ function textureShaderDrawTank(gl, textureShader, image, tank) {
   gl.drawArrays(primitiveType, offset, count);
 }
 
-// NOTE(Fede) Draw using active texture
-function textureShaderDrawRectangle(gl, textureShader, width, height, x, y) {
+function textureShaderDrawRectangle(
+  gl,
+  textureShader,
+  textureName,
+  width,
+  height,
+  x,
+  y) {
+  gl.bindBuffer(gl.ARRAY_BUFFER, textureShader.buffers.aPosition);
+  gl.vertexAttribPointer(
+    textureShader.locations.aPosition,
+    2,  // size: components per iteration
+    gl.FLOAT,  // data type
+    false, // normalize
+    0, // stride: bytes between beggining of consecutive vetex attributes in buffer
+    0 // offset: where to start reading data from the buffer
+  );
+  // Enable vertex attribute
+  gl.enableVertexAttribArray(textureShader.locations.aPosition);
   // Set matices
   var matrixProjection = mat3.projection(gl.canvas.width, gl.canvas.height);
   var matrixChangeOrigin = mat3.translation(-width / 2, -height / 2);
@@ -1322,14 +1242,10 @@ function textureShaderDrawRectangle(gl, textureShader, width, height, x, y) {
 
   // provide texture coordinates for the tank rectangle
   gl.bindBuffer(gl.ARRAY_BUFFER, textureShader.buffers.aTexCoord)
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-    0.0, 0.0,
-    0.0, 1.0,
-    1.0, 1.0,
-    0.0, 0.0,
-    1.0, 0.0,
-    1.0, 1.0,
-  ]), gl.STATIC_DRAW);
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array(textureShaderGetTextureCoords(textureName)),
+    gl.STATIC_DRAW);
   gl.enableVertexAttribArray(textureShader.locations.aTexCoord);
   gl.vertexAttribPointer(textureShader.locations.aTexCoord, 2, gl.FLOAT, false, 0, 0);
 
@@ -1337,6 +1253,65 @@ function textureShaderDrawRectangle(gl, textureShader, width, height, x, y) {
   var offset = 0;
   var count = 6;
   gl.drawArrays(primitiveType, offset, count);
+}
+
+// Texture
+var SPRITE_META = {
+  spriteWidth: 80,
+  spriteHeight: 60,
+  tankPlayer: {
+    x: 40,
+    y: 0,
+    width: 34,
+    height: 34,
+  },
+  tankEnemy: {
+    x: 0,
+    y: 0,
+    width: 34,
+    height: 34,
+  },
+  tileBrick: {
+    x: 0,
+    y: 40,
+    width: 20,
+    height: 20,
+  },
+  tileGrass: {
+    x: 20,
+    y: 40,
+    width: 20,
+    height: 20,
+  },
+  tileSteel: {
+    x: 40,
+    y: 40,
+    width: 20,
+    height: 20,
+  },
+  tileWater: {
+    x: 60,
+    y: 40,
+    width: 20,
+    height: 20,
+  },
+};
+
+function textureShaderGetTextureCoords(name: string) {
+  let coords = SPRITE_META[name];
+  let minX = coords.x/SPRITE_META.spriteWidth;
+  let minY = coords.y/SPRITE_META.spriteHeight;
+  let maxX = (coords.x + coords.width)/SPRITE_META.spriteWidth;
+  let maxY = (coords.y + coords.height)/SPRITE_META.spriteHeight;
+
+  return [
+    minX, minY,
+    minX, maxY,
+    maxX, maxY,
+    minX, minY,
+    maxX, minY,
+    maxX, maxY,
+  ]
 }
 
 // SHADER MANAGEMENT
