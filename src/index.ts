@@ -10,33 +10,35 @@ function run(sprite) {
   var canvas = <HTMLCanvasElement> document.getElementById('canvas');
   var gl = canvas.getContext('webgl');
 
-  // tile map: 640 x 480 means 24 rows of 32 tiles for 20 x 20 tiles
 
+  // 26 x 26
   var tileMap = [ 
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','s','s','x','g','g','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'b','b','x','x','b','b','x','x','b','b','x','x','b','b','x','x','s','s','b','g','g','b','b','b','b','b','b','b','b','b','b','b'],
-    [ 'b','b','x','x','b','b','x','x','b','b','x','x','b','b','x','x','x','x','x','x','x','b','b','b','b','b','b','b','b','b','b','b'],
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-    [ 'b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','x','x','b','b','b','b','b','b','b','b','b'],
-    [ 'b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','x','x','b','b','b','b','b','b','b','b','b'],
-    [ 'b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','x','x','b','b','b','b','b','b','b','b','b'],
-    [ 'b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','x','x','b','b','b','b','b','b','b','b','b'],
-    [ 'b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','x','x','b','b','b','b','b','b','b','b','b'],
-    [ 'b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','x','x','b','b','b','b','b','b','b','b','b'],
-    [ 'b','b','b','w','w','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','x','x','b','b','b','b','b','b','b','b','b'],
-    [ 'b','b','b','w','w','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','x','x','b','b','b','b','b','b','b','b','b'],
-    [ 'b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','x','x','b','b','b','b','b','b','b','b','b'],
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','w','w'],
-    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','w','w'],
-    [ 'b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','s','s'],
-    [ 'b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','s','s']
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','s','s','x','g','g','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','b','b','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+    [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
   ]
 
 
@@ -157,16 +159,18 @@ function run(sprite) {
   }
 
   // General game constants
-  let levelWidth = gl.canvas.width;
-  let levelHeight = gl.canvas.height;
+  let tilesX = 26;
+  let tilesY = 26;
   let tileWidth = 20;
   let tileHeight = 20;
+  let levelWidth = tilesX * tileWidth;
+  let levelHeight = tilesY * tileHeight;
   let baseParams = {
     width: 40,
     height: 40,
-    x: levelWidth / 2 - 40 / 2,
-    y: levelHeight + 40 / 2,
-  }
+    x: levelWidth / 2,
+    y: levelHeight - 40 / 2,
+  };
 
   // modify tile map based on baseParams
   let baseTilePositions = 
@@ -175,7 +179,7 @@ function run(sprite) {
       [levelHeight / tileHeight - 2 , Math.floor(levelWidth / 2 / tileWidth) - 2],
       [levelHeight / tileHeight - 3 , Math.floor(levelWidth / 2 / tileWidth) - 2],
       [levelHeight / tileHeight - 3 , Math.floor(levelWidth / 2 / tileWidth) - 1],
-      [levelHeight / tileHeight - 3 , Math.floor(levelWidth / 2 / tileWidth) - 0],
+      [levelHeight / tileHeight - 3 , Math.floor(levelWidth / 2 / tileWidth) + 0],
       [levelHeight / tileHeight - 3 , Math.floor(levelWidth / 2 / tileWidth) + 1],
       [levelHeight / tileHeight - 2 , Math.floor(levelWidth / 2 / tileWidth) + 1],
       [levelHeight / tileHeight - 1 , Math.floor(levelWidth / 2 / tileWidth) + 1],
@@ -281,8 +285,8 @@ function run(sprite) {
       width: baseParams.width,
       height: baseParams.height,
       position: {
-        x: gl.canvas.width / 2,
-        y: gl.canvas.height - 40 / 2,
+        x: baseParams.x,
+        y: baseParams.y,
       },
       wasDestroyed: false
     },
@@ -350,7 +354,7 @@ function run(sprite) {
       requestAnimationFrame(main);
     }
     // Clear the canvas
-    gl.clearColor(0, 0, 0, 1);
+    gl.clearColor(0.7, 0.7, 0.7, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     /*
@@ -554,6 +558,24 @@ function run(sprite) {
     // Enable vertex attribute
     gl.enableVertexAttribArray(colorShader.locations.aPosition);
 
+    // Draw Empty Tiles
+    for(var row = 0; row < Game.tileRows; row++) {
+      for(var col = 0; col < Game.tileCols; col++) {
+        var tile = Game.tiles[row][col];
+        if(tile == 'x') {
+          colorShaderDrawRectangle(
+            gl,
+            colorShader,
+            {r: 0, g: 0, b: 0, alpha: 1.0},
+            Game.tileWidth,
+            Game.tileHeight,
+            col * Game.tileWidth + Game.tileWidth / 2,
+            row * Game.tileHeight + Game.tileHeight / 2
+          );
+        }
+      }
+    }
+
     // Draw Base
     if(!Game.base.wasDestroyed) {
       colorShaderDrawRectangle(
@@ -578,6 +600,7 @@ function run(sprite) {
         colorShaderDrawBullet(gl, colorShader, Game, enemy.tank.bullet);
       }
     });
+
 
     DEBUGTimestamp = DEBUGTime("Color Shader Draw", DEBUGTimestamp);
 
