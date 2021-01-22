@@ -10,7 +10,6 @@ function run(sprite) {
   var canvas = <HTMLCanvasElement> document.getElementById('canvas');
   var gl = canvas.getContext('webgl');
 
-
   // 26 x 26
   var tileMap = [ 
     [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','s','s','x','g','g','x','x','x','x','x'],
@@ -159,6 +158,9 @@ function run(sprite) {
   }
 
   // General game constants
+  let tileMapOffsetX = 20;
+  let tileMapOffsetY = 20;
+
   let tilesX = 26;
   let tilesY = 26;
   let tileWidth = 20;
@@ -168,8 +170,8 @@ function run(sprite) {
   let baseParams = {
     width: 40,
     height: 40,
-    x: levelWidth / 2,
-    y: levelHeight - 40 / 2,
+    x: levelWidth / 2 + tileMapOffsetX,
+    y: levelHeight - 40 / 2 + tileMapOffsetY,
   };
 
   // modify tile map based on baseParams
@@ -212,6 +214,8 @@ function run(sprite) {
     // Level
     levelWidth: levelWidth,
     levelHeight: levelHeight,
+    tileMapOffsetX: tileMapOffsetX,
+    tileMapOffsetY: tileMapOffsetY,
     tileWidth: tileWidth,
     tileHeight: tileWidth,
     tileRows: tileMap.length,
@@ -433,6 +437,8 @@ function run(sprite) {
         let spawnPositions = levelConfig.enemySpawnPositions;
         let newPositionIndex = Math.floor(spawnPositions.length * Math.random());
         let newPosition = spawnPositions[newPositionIndex];
+        newPosition.x += tileMapOffsetX;
+        newPosition.y += tileMapOffsetY;
         let tankData = tankGetData(nextEnemyTank);
         let enemyTanks = Game.enemies.map(e => e.tank);
         let otherTanks = [Game.playerTank].concat(enemyTanks);
@@ -569,8 +575,8 @@ function run(sprite) {
             {r: 0, g: 0, b: 0, alpha: 1.0},
             Game.tileWidth,
             Game.tileHeight,
-            col * Game.tileWidth + Game.tileWidth / 2,
-            row * Game.tileHeight + Game.tileHeight / 2
+            col * Game.tileWidth + Game.tileWidth / 2 + tileMapOffsetX,
+            row * Game.tileHeight + Game.tileHeight / 2 + tileMapOffsetY,
           );
         }
       }
@@ -654,8 +660,8 @@ function run(sprite) {
             tileName,
             Game.tileWidth,
             Game.tileHeight,
-            col * Game.tileWidth + Game.tileWidth / 2,
-            row * Game.tileHeight + Game.tileHeight / 2
+            col * Game.tileWidth + Game.tileWidth / 2 + tileMapOffsetX,
+            row * Game.tileHeight + Game.tileHeight / 2 + tileMapOffsetY,
           );
         }
       }
@@ -759,7 +765,7 @@ function tankComputeMovementInDirection(Game, tank: Tank, dt: number) {
     );
 
   var screenLimitsCollisions = 
-    rectangleBoundariesCollisionsScreenLimits(
+    rectangleBoundariesCollisionsTileMapLimits(
       Game, boundaries, newPosition, relativeWidth, relativeHeight);
   boundaries = screenLimitsCollisions.boundaries;
   newPosition = screenLimitsCollisions.position;
@@ -874,7 +880,7 @@ function bulletUpdate(tank: Tank, Game, dt) {
 
   // Screen Limits
   var screenLimitsCollisions = 
-    rectangleBoundariesCollisionsScreenLimits(
+    rectangleBoundariesCollisionsTileMapLimits(
       Game, boundaries, newPosition, relativeWidth, relativeHeight);
   boundaries = screenLimitsCollisions.boundaries;
   newPosition = screenLimitsCollisions.position;
@@ -976,11 +982,11 @@ function getRectangleBoundaries(position: Vector2, width: number, height: number
   };
 };
 
-function rectangleBoundariesCollisionsScreenLimits(Game, boundaries: RectangleBoundaries, position: Vector2, width, height) {
-  var minX = Math.round(width / 2);
-  var maxX = Math.round(Game.levelWidth - width / 2);
-  var minY = Math.round(height / 2);
-  var maxY = Math.round(Game.levelHeight - height / 2);
+function rectangleBoundariesCollisionsTileMapLimits(Game, boundaries: RectangleBoundaries, position: Vector2, width, height) {
+  var minX = Math.round(width / 2) + Game.tileMapOffsetX;
+  var maxX = Math.round(Game.levelWidth - width / 2) + Game.tileMapOffsetX;
+  var minY = Math.round(height / 2) + Game.tileMapOffsetY;
+  var maxY = Math.round(Game.levelHeight - height / 2) + Game.tileMapOffsetY;
   var newPosition = {x: position.x, y: position.y};
   var collisions = [];
 
@@ -1015,18 +1021,42 @@ function rectangleBoundariesCollisionsScreenLimits(Game, boundaries: RectangleBo
   }
 }
 
+function positionAbsoluteToRelative(Game, position: Vector2): Vector2 {
+  return {
+    x: position.x - Game.tileMapOffsetX,
+    y: position.y - Game.tileMapOffsetY,
+  }
+}
+
+function positionRelativeToAbsolute(Game, position: Vector2): Vector2 {
+  return {
+    x: position.x + Game.tileMapOffsetX,
+    y: position.y + Game.tileMapOffsetY,
+  }
+}
+
 function rectangleBoundariesCollisionsTiles(Game, boundaries: RectangleBoundaries, position: Vector2, movement: Vector2, width, height, targetTiles: string[]) {
   var collisions = [];
   var newPosition = {x: position.x, y: position.y};
+  var newPositionRelative = positionAbsoluteToRelative(Game, newPosition);
 
   var isTargetTile = function(tile) { return targetTiles.indexOf(tile) !== -1 }
 
+  // Do relative boundaries relative to Tile Map
+  // TODO: Applying this breaks everything
+  var boundariesRelative = {
+    top: boundaries.top - Game.tileMapOffsetY,
+    bottom: boundaries.bottom - Game.tileMapOffsetY,
+    right: boundaries.right - Game.tileMapOffsetX,
+    left: boundaries.left - Game.tileMapOffsetX,
+  };
+
   // check collision to the right
   if(movement.x > 0) {
-    var col = Math.min(Math.floor((boundaries.right) / Game.tileWidth), Game.tileCols - 1);
-    var topRow = Math.floor((boundaries.top + 1) / Game.tileHeight);
-    var centerRow = Math.floor(newPosition.y / Game.tileHeight);
-    var bottomRow = Math.floor((boundaries.bottom - 1) / Game.tileHeight);
+    var col = Math.min(Math.floor((boundariesRelative.right) / Game.tileWidth), Game.tileCols - 1);
+    var topRow = Math.floor((boundariesRelative.top + 1) / Game.tileHeight);
+    var centerRow = Math.floor(newPositionRelative.y / Game.tileHeight);
+    var bottomRow = Math.floor((boundariesRelative.bottom - 1) / Game.tileHeight);
 
     var collided = false;
     arrayUnique([topRow, centerRow, bottomRow]).forEach(function(row) {
@@ -1038,16 +1068,16 @@ function rectangleBoundariesCollisionsTiles(Game, boundaries: RectangleBoundarie
     });
 
     if(collided) {
-      newPosition.x = Math.round((col) * Game.tileWidth - width / 2);
+      newPositionRelative.x = Math.round((col) * Game.tileWidth - width / 2);
     }
   }
 
   // check collision to the left
   if(movement.x < 0) {
-    var col = Math.floor(boundaries.left / Game.tileWidth);
-    var topRow = Math.floor((boundaries.top + 1) / Game.tileHeight);
-    var centerRow = Math.floor(newPosition.y / Game.tileHeight);
-    var bottomRow = Math.floor((boundaries.bottom - 1) / Game.tileHeight);
+    var col = Math.floor(boundariesRelative.left / Game.tileWidth);
+    var topRow = Math.floor((boundariesRelative.top) / Game.tileHeight);
+    var centerRow = Math.floor(newPositionRelative.y / Game.tileHeight);
+    var bottomRow = Math.floor((boundariesRelative.bottom) / Game.tileHeight);
 
     var collided = false;
     arrayUnique([topRow, centerRow, bottomRow]).forEach(function(row) {
@@ -1059,16 +1089,16 @@ function rectangleBoundariesCollisionsTiles(Game, boundaries: RectangleBoundarie
     });
 
     if(collided) {
-      newPosition.x = Math.round((col + 1) * Game.tileWidth + width / 2);
+      newPositionRelative.x = Math.round((col + 1) * Game.tileWidth + width / 2);
     }
   }
 
   // check collision going down 
   if(movement.y > 0) {
-    var row = Math.min(Math.floor(boundaries.bottom / Game.tileHeight), Game.tileRows - 1);
-    var leftCol = Math.floor((boundaries.left + 1) / Game.tileWidth);
-    var centerCol = Math.floor(newPosition.x / Game.tileWidth);
-    var rightCol = Math.floor((boundaries.right - 1) / Game.tileWidth);
+    var row = Math.min(Math.floor(boundariesRelative.bottom / Game.tileHeight), Game.tileRows - 1);
+    var leftCol = Math.floor((boundariesRelative.left + 1) / Game.tileWidth);
+    var centerCol = Math.floor(newPositionRelative.x / Game.tileWidth);
+    var rightCol = Math.floor((boundariesRelative.right - 1) / Game.tileWidth);
 
     var collided = false;
     arrayUnique([leftCol, centerCol, rightCol]).forEach(function(col) {
@@ -1080,16 +1110,16 @@ function rectangleBoundariesCollisionsTiles(Game, boundaries: RectangleBoundarie
     });
 
     if(collided) {
-      newPosition.y = Math.round((row) * Game.tileHeight - height / 2);
+      newPositionRelative.y = Math.round((row) * Game.tileHeight - height / 2);
     }
   }
 
   // check collision going up 
   if(movement.y < 0) {
-    var row = Math.floor(boundaries.top / Game.tileHeight);
-    var leftCol = Math.floor((boundaries.left + 1) / Game.tileWidth);
-    var centerCol = Math.floor(newPosition.x / Game.tileWidth);
-    var rightCol = Math.floor((boundaries.right - 1) / Game.tileWidth);
+    var row = Math.floor(boundariesRelative.top / Game.tileHeight);
+    var leftCol = Math.floor((boundariesRelative.left + 1) / Game.tileWidth);
+    var centerCol = Math.floor(newPositionRelative.x / Game.tileWidth);
+    var rightCol = Math.floor((boundariesRelative.right - 1) / Game.tileWidth);
 
     var collided = false;
     arrayUnique([leftCol, centerCol, rightCol]).forEach(function(col) {
@@ -1101,10 +1131,11 @@ function rectangleBoundariesCollisionsTiles(Game, boundaries: RectangleBoundarie
     });
 
     if(collided){
-      newPosition.y = Math.round((row + 1) * Game.tileHeight + height / 2);
+      newPositionRelative.y = Math.round((row + 1) * Game.tileHeight + height / 2);
     }
   }
 
+  newPosition = positionRelativeToAbsolute(Game, newPositionRelative);
   var newBoundaries = getRectangleBoundaries(newPosition, width, height);
 
   var result =  {
