@@ -357,10 +357,6 @@ function run(sprite) {
     if(Game.running) {
       requestAnimationFrame(main);
     }
-    // Clear the canvas
-    gl.clearColor(0.7, 0.7, 0.7, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-
     /*
      * UPDATE 
      */
@@ -548,6 +544,8 @@ function run(sprite) {
     DEBUGTimestamp = DEBUGTime("Update", DEBUGTimestamp);
 
     // DRAW
+    gl.clearColor(0.7, 0.7, 0.7, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
 
     // ColorShader
     // Create and bind buffer to the position attribute
@@ -668,6 +666,7 @@ function run(sprite) {
     }
 
     DEBUGTimestamp = DEBUGTime("Tiles Draw", DEBUGTimestamp);
+
 
     // Store input state
     Game.spaceWasPressed = Game.spaceIsPressed;
@@ -1043,7 +1042,6 @@ function rectangleBoundariesCollisionsTiles(Game, boundaries: RectangleBoundarie
   var isTargetTile = function(tile) { return targetTiles.indexOf(tile) !== -1 }
 
   // Do relative boundaries relative to Tile Map
-  // TODO: Applying this breaks everything
   var boundariesRelative = {
     top: boundaries.top - Game.tileMapOffsetY,
     bottom: boundaries.bottom - Game.tileMapOffsetY,
@@ -1368,47 +1366,6 @@ function textureShaderGetTextureCoords(name: string) {
   ]
 }
 
-// SHADER MANAGEMENT
-function initShaderProgram(gl, shaders: Shaders) {
-  var vertexShader = loadShader(gl, gl.VERTEX_SHADER, shaders.vertex);
-  var fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, shaders.fragment);
-
-  // console.log('Vertex shader: ', gl.getShaderInfoLog(vertexShader) || 'OK');
-  // console.log('Fragment shader: ', gl.getShaderInfoLog(fragmentShader) || 'OK');
-
-  // Create the shader program
-  var shaderProgram = gl.createProgram();
-  gl.attachShader(shaderProgram, vertexShader);
-  gl.attachShader(shaderProgram, fragmentShader);
-  gl.linkProgram(shaderProgram);
-
-
-  // If creating a program failed, alert
-  if(!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-    alert('Unable to initialize shader program: ' + gl.getProgramInfoLog(shaderProgram));
-  }
-
-  return shaderProgram;
-}
-
-function loadShader(gl, type, source) {
-  var shader = gl.createShader(type);
-
-  // Send the source to the shader object
-  gl.shaderSource(shader, source);
-
-  // Compile the shader program
-  gl.compileShader(shader);
-
-  // See if it compiled successfully
-  if(!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    alert('An error has ocurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
-    gl.deleteShader(shader);
-    return null;
-  }
-
-  return shader;
-}
 
 // MATRICES
 var mat3 = {

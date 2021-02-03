@@ -43,7 +43,7 @@ echo .html Files copied successfully
 # Get js file
 echo Compiling .ts files...
 envFile="src/config/${env}.ts"
-tsc $envFile src/types.ts src/index.ts --outFile build/index.js --lib dom,es2015
+tsc $envFile src/types.ts src/shaders.ts src/index.ts --outFile build/index.js --lib dom,es2015
 echo .ts Files compiled successfully
 
 # Copy images

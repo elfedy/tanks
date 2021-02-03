@@ -1,9 +1,4 @@
 // TYPES 
-type Shaders = {
-  vertex: string,
-  fragment: string,
-}
-
 type Color = {
   r: number,
   g: number,
