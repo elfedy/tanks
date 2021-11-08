@@ -158,8 +158,8 @@ function run(sprite) {
   }
 
   // General game constants
-  let tileMapOffsetX = 20;
-  let tileMapOffsetY = 20;
+  let tileMapOffsetX = 0;
+  let tileMapOffsetY = 0;
 
   let tilesX = 26;
   let tilesY = 26;
@@ -267,6 +267,18 @@ function run(sprite) {
     enemies: [
     ],
     nextEnemies: [
+      "enemyNormal",
+      "enemyNormal",
+      "enemyNormal",
+      "enemyNormal",
+      "enemyNormal",
+      "enemyNormal",
+      "enemyNormal",
+      "enemyNormal",
+      "enemyNormal",
+      "enemyNormal",
+      "enemyNormal",
+      "enemyNormal",
       "enemyNormal",
       "enemyNormal",
       "enemyNormal",
