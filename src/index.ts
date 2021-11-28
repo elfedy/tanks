@@ -556,7 +556,7 @@ function run(sprite) {
     DEBUGTimestamp = DEBUGTime("Update", DEBUGTimestamp);
 
     // DRAW
-    gl.clearColor(0.47, 0.46, 0.42, 1);
+    gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     // ColorShader
@@ -574,24 +574,8 @@ function run(sprite) {
     // Enable vertex attribute
     gl.enableVertexAttribArray(colorShader.locations.aPosition);
 
-    // Draw Empty Tiles
-    for(var row = 0; row < Game.tileRows; row++) {
-      for(var col = 0; col < Game.tileCols; col++) {
-        var tile = Game.tiles[row][col];
-        if(tile == 'x') {
-          colorShaderDrawRectangle(
-            gl,
-            colorShader,
-            {r: 0, g: 0, b: 0, alpha: 1.0},
-            Game.tileWidth,
-            Game.tileHeight,
-            col * Game.tileWidth + Game.tileWidth / 2 + tileMapOffsetX,
-            row * Game.tileHeight + Game.tileHeight / 2 + tileMapOffsetY,
-          );
-        }
-      }
-    }
-
+    // TODO(fede): optimize tile drawing:
+    // * Just do a single pass through all the tiles.
     // Draw Base
     if(!Game.base.wasDestroyed) {
       colorShaderDrawRectangle(
@@ -604,8 +588,45 @@ function run(sprite) {
         Game.base.position.y,
       );
     }
+
+    gl.useProgram(textureShaderProgram);
+    // Draw Tiles and store ground tiles to render
+    // after bullets
+    let grassTiles = []
+    for(var row = 0; row < Game.tileRows; row++) {
+      for(var col = 0; col < Game.tileCols; col++) {
+        var tile = Game.tiles[row][col];
+        if(tile == 'x') continue;
+        if(tile !== 'g') {
+          let tileName
+          switch(tile) {
+            case 'b':
+              tileName = 'tileBrick';
+              break;
+            case 's':
+              tileName = 'tileSteel';
+              break;
+            case 'w':
+              tileName = 'tileWater';
+              break;
+          }
+          textureShaderDrawRectangle(
+            gl,
+            textureShader,
+            tileName,
+            Game.tileWidth,
+            Game.tileHeight,
+            col * Game.tileWidth + Game.tileWidth / 2 + tileMapOffsetX,
+            row * Game.tileHeight + Game.tileHeight / 2 + tileMapOffsetY,
+          );
+        } else {
+          grassTiles.push([col, row]);
+        }
+      }
+    }
       
 
+    gl.useProgram(colorShaderProgram);
     // DrawBullets
     if(Game.playerTank.bullet) {
       colorShaderDrawBullet(gl, colorShader, Game, Game.playerTank.bullet);
@@ -622,6 +643,7 @@ function run(sprite) {
 
     // TextureShader
     // Create and bind buffer to the position attribute
+    // TODO: Why did changing the colors break everything
     gl.useProgram(textureShaderProgram);
 
     // Draw Player
@@ -644,38 +666,18 @@ function run(sprite) {
 
     DEBUGTimestamp = DEBUGTime("Tank Draw", DEBUGTimestamp);
 
-    // Draw Tiles
-    for(var row = 0; row < Game.tileRows; row++) {
-      for(var col = 0; col < Game.tileCols; col++) {
-        var tile = Game.tiles[row][col];
-        if(tile !== 'x') {
-          let tileName
-          switch(tile) {
-            case 'b':
-              tileName = 'tileBrick';
-              break;
-            case 's':
-              tileName = 'tileSteel';
-              break;
-            case 'g':
-              tileName = 'tileGrass';
-              break;
-            case 'w':
-              tileName = 'tileWater';
-              break;
-          }
-          textureShaderDrawRectangle(
-            gl,
-            textureShader,
-            tileName,
-            Game.tileWidth,
-            Game.tileHeight,
-            col * Game.tileWidth + Game.tileWidth / 2 + tileMapOffsetX,
-            row * Game.tileHeight + Game.tileHeight / 2 + tileMapOffsetY,
-          );
-        }
-      }
-    }
+    // Draw GrassTiles
+    grassTiles.forEach(([col, row]) => {
+        textureShaderDrawRectangle(
+          gl,
+          textureShader,
+          'tileGrass',
+          Game.tileWidth,
+          Game.tileHeight,
+          col * Game.tileWidth + Game.tileWidth / 2 + tileMapOffsetX,
+          row * Game.tileHeight + Game.tileHeight / 2 + tileMapOffsetY,
+        );
+    });
 
     DEBUGTimestamp = DEBUGTime("Tiles Draw", DEBUGTimestamp);
 
