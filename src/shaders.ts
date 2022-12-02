@@ -62,7 +62,7 @@ function squareVertices(width: number, height: number, x: number, y: number): nu
 }
 
 // COLOR SHADER
-function colorShaderDrawRectangle(gl, colorShader, color: Color, width, height, x, y, debugMe =false)
+function colorShaderDrawRectangle(gl, colorShader, color: Color, width, height, x, y)
 {
     let glLocations = colorShader.locations;
     gl.bindBuffer(gl.ARRAY_BUFFER, colorShader.buffers.aPosition);
