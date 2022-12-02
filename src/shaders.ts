@@ -62,9 +62,19 @@ function squareVertices(width: number, height: number, x: number, y: number): nu
 }
 
 // COLOR SHADER
-function colorShaderDrawRectangle(gl, colorShader, color: Color, width, height, x, y)
+function colorShaderDrawRectangle(gl, colorShader, color: Color, width, height, x, y, debugMe =false)
 {
-    var glLocations = colorShader.locations;
+    let glLocations = colorShader.locations;
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorShader.buffers.aPosition);
+    gl.vertexAttribPointer(
+      glLocations.aPosition,
+      2,  // size: components per iteration
+      gl.FLOAT,  // data type
+      false, // normalize
+      0, // stride: bytes between beggining of consecutive vetex attributes in buffer
+      0 // offset: where to start reading data from the buffer
+    );
+    gl.enableVertexAttribArray(glLocations.aPosition);
     // Set matices
     var matrixProjection = mat3.projection(gl.canvas.width, gl.canvas.height);
     var matrixChangeOrigin = mat3.translation(-width / 2, -height / 2);
@@ -141,7 +151,6 @@ var SPRITE_META = {
     width: 20,
     height: 20,
   },
-  // TODO: The rest I added
 };
 
 function textureShaderDrawTank(gl, textureShader, textureName, tank) {

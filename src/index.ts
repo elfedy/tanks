@@ -38,7 +38,7 @@ function run(sprite) {
     [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
     [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
     [ 'x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
-  ]
+  ];
 
 
   if(gl === null) {
@@ -256,7 +256,7 @@ function run(sprite) {
     },
 
     // Enemies
-    enemySpawnCountdown: 3 * time.seconds,
+    enemySpawnCountdown: 1 * time.seconds,
     enemyColor: {
       r: 0.8,
       g: 0.2,
@@ -562,17 +562,6 @@ function run(sprite) {
     // ColorShader
     // Create and bind buffer to the position attribute
     gl.useProgram(colorShaderProgram);
-    gl.bindBuffer(gl.ARRAY_BUFFER, colorShader.buffers.aPosition);
-    gl.vertexAttribPointer(
-      colorShader.locations.aPosition,
-      2,  // size: components per iteration
-      gl.FLOAT,  // data type
-      false, // normalize
-      0, // stride: bytes between beggining of consecutive vetex attributes in buffer
-      0 // offset: where to start reading data from the buffer
-    );
-    // Enable vertex attribute
-    gl.enableVertexAttribArray(colorShader.locations.aPosition);
 
     // TODO(fede): optimize tile drawing:
     // * Just do a single pass through all the tiles.
@@ -593,9 +582,9 @@ function run(sprite) {
     // Draw Tiles and store ground tiles to render
     // after bullets
     let grassTiles = []
-    for(var row = 0; row < Game.tileRows; row++) {
-      for(var col = 0; col < Game.tileCols; col++) {
-        var tile = Game.tiles[row][col];
+    for(let row = 0; row < Game.tileRows; row++) {
+      for(let col = 0; col < Game.tileCols; col++) {
+        let tile = Game.tiles[row][col];
         if(tile == 'x') continue;
         if(tile !== 'g') {
           let tileName
@@ -624,7 +613,6 @@ function run(sprite) {
         }
       }
     }
-      
 
     gl.useProgram(colorShaderProgram);
     // DrawBullets
@@ -851,8 +839,8 @@ function bulletCreate(tank: Tank) {
     tank.bullet =  {
       vx: vx,
       vy: vy,
-      width: 10,
-      height: 10,
+      width: 5,
+      height: 5,
       position: {
         x: tank.position.x,
         y: tank.position.y,
