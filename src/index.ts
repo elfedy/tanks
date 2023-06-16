@@ -694,13 +694,13 @@ function tankGetData(tankType: string): TankData {
       playerNormal: {
         width: 35,
         height: 35,
-        defaultSpeed: 100,
+        defaultSpeed: 200,
         bulletSpeed: 800,
       },
       enemyNormal: {
         width: 35,
         height: 35,
-        defaultSpeed: 100,
+        defaultSpeed: 200,
         bulletSpeed: 800,
       },
     }[tankType];
@@ -725,8 +725,8 @@ function pickRandomDirection(): string {
 
 //NOTE(Fede) Asumes tank is effectively moving in its direction
 function tankEstimateMovement(tank: Tank, dt: number) : Vector2 {
-  var dx = 0;
-  var dy = 0;
+  let dx = 0;
+  let dy = 0;
   if(tank.direction === "right") {
     dx += Math.floor(tank.speed * dt / 1000);
   } else if(tank.direction === "left") {
@@ -1255,7 +1255,7 @@ function arrayUnique(array: any[]): any[] {
   return result;
 }
 
-function DEBUG(log: string) {
+function DEBUG(log: any) {
   if (Config.debug) {
     console.log(log);
   }
